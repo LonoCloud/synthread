@@ -36,13 +36,13 @@ This clearly identifies the topic to be threaded.
              :last first)
 ```
 
-3. Don't change the type (or shape) of the topic as it flows through.
-In our experience, -> macros are used to either dig into a deep data
-structure massaging the topic the deeper it goes or -> macros are
-used to build a result by descrbing a pipeline of operations. The main
-difference between digging and building is that the type and shape of
-the threaded topic is changing or is constant respectively. We use
-these macros for builders as a general rule.
+3. Don't change the type (or shape) of the topic as it flows through.  In our
+experience, `->` macros are used to either dig into a deep data structure
+massaging the topic the deeper it goes or `->` macros are used to build a
+result by descrbing a pipeline of operations. The main difference between
+digging and building is that the type and shape of the threaded topic is
+changing or is constant respectively. We use these macros for builders as a
+general rule.
 ```clojure
    ;; good
    (-> {:a 1 :b 2}
