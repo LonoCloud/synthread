@@ -7,15 +7,23 @@ operate on a threaded topic. See also: test-> in recent Clojure versions.
 
 SynThread is available from clojars. Add it to your Leiningen project.clj:
 
+```clojure
 [lonocloud/synthread "1.0.0"]
+```
 
 # Usage
 
-See unit tests for specific examples of each macro.
+See [unit tests](http://github.com/LonoCloud/synthread/blob/master/test/lonocloud/synthread/test.clj#L11)
+for specific examples of each macro.
 
-There are two style guidelines we recommend:
+There are three style guidelines we recommend:
 
-1. Always start a threaded block with Clojure's standard '->' macro.
+1. Require SynThread with the alias `->` like this:
+```clojure
+   (ns your.ns.here
+     (:require [lonocloud.synthread :as ->]))
+
+2. Always start a threaded block with Clojure's standard `->` macro.
 This clearly identifies the topic to be threaded.
 ```clojure
    ;; good
@@ -27,7 +35,7 @@ This clearly identifies the topic to be threaded.
              :last first)
 ```
 
-2. Don't change the type (or shape) of the topic as it flows through.
+3. Don't change the type (or shape) of the topic as it flows through.
 In our experience, -> macros are used to either dig into a deep data
 structure massaging the topic the deeper it goes or -> macros are
 used to build a result by descrbing a pipeline of operations. The main
