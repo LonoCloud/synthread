@@ -8,7 +8,7 @@ operate on a threaded topic. See also: test-> in recent Clojure versions.
 SynThread is available from clojars. Add it to your Leiningen project.clj:
 
 ```clojure
-[lonocloud/synthread "1.0.0"]
+   [lonocloud/synthread "1.0.0"]
 ```
 
 # Usage
@@ -22,6 +22,7 @@ There are three style guidelines we recommend:
 ```clojure
    (ns your.ns.here
      (:require [lonocloud.synthread :as ->]))
+```
 
 2. Always start a threaded block with Clojure's standard `->` macro.
 This clearly identifies the topic to be threaded.
