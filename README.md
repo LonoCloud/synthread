@@ -17,7 +17,7 @@ There are two style guidelines we recommend:
 
 1. Always start a threaded block with Clojure's standard '->' macro.
 This clearly identifies the topic to be threaded.
-```
+```clojure
    ;; good
    (-> {:first "John" :last "Smith"}
        (->/assoc :last first))
@@ -34,7 +34,7 @@ used to build a result by descrbing a pipeline of operations. The main
 difference between digging and building is that the type and shape of
 the threaded topic is changing or is constant respectively. We use
 these macros for builders as a general rule.
-```
+```clojure
    ;; good
    (-> {:a 1 :b 2}
        (->/assoc :a inc)
