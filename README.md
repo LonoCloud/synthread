@@ -111,8 +111,8 @@ On the other hand, `doto` is nice when you do *not* want to pass a
 result to the next step:
 ```clojure
    (-> {:a 1 :b 2}
-       (doto prn)
-       (->/assoc :a inc))
+     (doto prn)
+     (->/assoc :a inc))
 ```
 The debugging `prn` above works, but the patten rapidly becomes
 awkward if you want to provide a label to the prn. That would actually
@@ -120,9 +120,28 @@ require a combination of `->/as` to label it and `do` to prevent the
 topic from being printed before the label because of threading. This
 is exactly the purpose of `->/aside`:
 ```clojure
-    (-> {:a 1 :b 2}
-       (->/aside topic        ;; note the body is entirely unthreaded
-          (prn :topic topic)
-          (println "Note: b is currently" (:b topic))) ;; return value is ignored
-       (->/assoc :a inc))
+   (-> {:a 1 :b 2}
+     (->/aside topic        ;; note the body is entirely unthreaded
+       (prn :topic topic)
+       (println "Note: b is currently" (:b topic))) ;; return value is ignored
+     (->/assoc :a inc))
+```
+
+6. In addition to the threading macros, two helper functions are also
+available: `->/reset` and `->/apply`. Use `->/reset` to set the value
+of the threaded topic (similar to Clojure's `reset!`) and use
+`->/apply` to call a function with the threaded topic as its first
+argument (similar to Clojure's `apply`).
+```clojure
+   ;; example of ->/reset
+   (-> false
+     (->/reset true))
+   ;; returns true
+
+   ;; example of ->/apply
+   (-> []
+       (->/apply conj [1 2 3])  ;; => (conj [] 1 2 3)
+       (->/apply [conj 4 5 6])) ;; also works!
+   ;; returns [1 2 3 4 5 6]
+
 ```
