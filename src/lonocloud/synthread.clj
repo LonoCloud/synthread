@@ -143,19 +143,8 @@
   (->/let 4 [x 3] (+ x) (- x)) ;; returns 4"
   [x bindings & body]
   `(clj/let [~@bindings
-         x# ~x]
+             x# ~x]
      (-> x# ~@body)))
-
-
-(defmacro let-as
-  "EXPERIMENTAL Thread x through both the body and each binding form."
-  [x bindings & body]
-  (clj/let [xx (gensym)]
-           `(clj/let [~xx ~x
-                      ~@(mapcat seq
-                                (clj/for [[label form] (partition 2 bindings)]
-                                  `[~label (-> ~xx ~form)]))]
-                     (-> ~xx ~@body))))
 
 ;; Labeling forms (as, as-do, as-to)
 ;; +----- label value x
@@ -168,19 +157,19 @@
 ;; 0 1 1 (-> x ...)
 ;; 1 0 0 (->/aside x ...)      ;; equivilent to (doto (->/as x (do ...)))
 ;; 1 0 1 (doto x (->/as ...))
-;; 1 1 0 (->/as x (do .... (inc x))) ;; mention in style guide
+;; 1 1 0 (->/as x (do .... ))  ;; mention in style guide
 ;; 1 1 1 (->/as x ...)
 
 (defmacro as
   "Bind value of x and thread x through body.
-   EXPERIMENTALLY supports arbitrary function binding at the top level using -> or ->>"
+   EXPERIMENTALLY supports arbitrary threading form in place of binding form."
   [x binding & body]
-  (if-not (seq? binding)
-    `(clj/let [x# ~x
-               ~binding x#]
-       (-> x# ~@body))
+  (if (seq? binding)
     `(clj/let [x# ~x
                ~(clj/last binding) (-> x# ~(drop-last binding))]
+       (-> x# ~@body))
+    `(clj/let [x# ~x
+               ~binding x#]
        (-> x# ~@body))))
 
 (defmacro aside
@@ -196,7 +185,7 @@
 (defmacro each-as
   "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
   [x binding & body]
-  `(clj/for [x# ~x :let [~binding x#]] (-> x# ~@body)))
+  `(clj/for [x# ~x] (as x# ~binding ~@body)))
 
 (defn apply
   "Apply f to x and args."
