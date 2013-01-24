@@ -130,28 +130,21 @@
               (+ a b))
       (->is = 9)))
 
-(deftest test-let-as
-  (-> 10
-      (->/let-as [dbl (* 2)]
-                 (+ dbl))
-      (->is = 30)))
-
 (deftest test-as
   (-> 10
       (->/as ten
              (+ ten))
       (->is = 20)))
 
-(deftest test-as-do
-  (-> 10
-      (->/as-do ten
-                (is (= ten 10))
-                :ok)
-      (->is = :ok)))
+(deftest test-as-with-arrow
+  (-> {:a {:delta 1} :b 2}
+      (->/as (-> :a :delta delta)
+             (->/assoc :b (+ delta)))
+      (->is = {:a {:delta 1} :b 3})))
 
-(deftest test-as-to
+(deftest test-aside
   (-> 10
-      (->/as-to ten
+      (->/aside ten
                 (is (= ten 10))
                 :ignored)
       (->is = 10)))

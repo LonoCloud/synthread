@@ -148,7 +148,7 @@
 
 
 (defmacro let-as
-  "EPERIMENTAL Thread x through both the body and each binding form."
+  "EXPERIMENTAL Thread x through both the body and each binding form."
   [x bindings & body]
   (clj/let [xx (gensym)]
            `(clj/let [~xx ~x
@@ -162,43 +162,39 @@
 ;; | +--- modify value x
 ;; | | +- thread value x
 ;; | | |
-;; 0 0 0 (doto x (do ...))
-;; 0 0 1 (doto x (-> ...))     ;; almost but not quite (doto x ...)
+;; 0 0 0 (doto x (do ...))     ;; for side effects, no access to the topic: (prn "hello")
+;; 0 0 1 (doto x (-> ...))     ;; almost but not quite (doto x ...) threading but with chained side-effects?
 ;; 0 1 0 (do x ...)
 ;; 0 1 1 (-> x ...)
-;; 1 0 0 (->/as-to x ...)      ;; equivilent to (doto x (->/as-do ...))
-;; 1 0 1 (doto x (->/as ...))  ;; should be ->/as-to, but nobody cares
-;; 1 1 0 (->/as-do x ...)
+;; 1 0 0 (->/aside x ...)      ;; equivilent to (doto (->/as x (do ...)))
+;; 1 0 1 (doto x (->/as ...))
+;; 1 1 0 (->/as x (do .... (inc x))) ;; mention in style guide
 ;; 1 1 1 (->/as x ...)
 
 (defmacro as
-  "Bind value of x and thread x through body."
+  "Bind value of x and thread x through body.
+   EXPERIMENTALLY supports arbitrary function binding at the top level using -> or ->>"
   [x binding & body]
-  `(clj/let [x# ~x
-             ~binding x#]
-     (-> x# ~@body)))
+  (if-not (seq? binding)
+    `(clj/let [x# ~x
+               ~binding x#]
+       (-> x# ~@body))
+    `(clj/let [x# ~x
+               ~(clj/last binding) (-> x# ~(drop-last binding))]
+       (-> x# ~@body))))
 
-(defmacro as-do
-  "Bind value of x, evaluate unthreaded body and return result of body."
+(defmacro aside
+  "EXPERIMENTAL Bind value of x, evaluate unthreaded body and return x."
   [x binding & body]
-  `(clj/let [~binding ~x]
-     ~@body))
-
-(defmacro as-to
-  "Bind value of x, evaluate unthreaded body and return x."
-  [x binding & body]
-  `(clj/let [x# ~x
-             ~binding x#]
-     ~@body
-     x#))
+  `(doto ~x (as ~binding (do ~@body))))
 
 (defmacro each
-  "Experimental. Thread each item in x through body."
+  "EXPERIMENTAL Thread each item in x through body."
   [x & body]
   `(clj/for [x# ~x] (-> x# ~@body)))
 
 (defmacro each-as
-  "Experimental. Thread each item in x through body and apply binding to each item."
+  "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
   [x binding & body]
   `(clj/for [x# ~x :let [~binding x#]] (-> x# ~@body)))
 

@@ -16,7 +16,7 @@ SynThread is available from clojars. Add it to your Leiningen project.clj:
 See [unit tests](http://github.com/LonoCloud/synthread/blob/master/test/lonocloud/synthread/test.clj#L11)
 for specific examples of each macro.
 
-There are three style guidelines we recommend:
+Some style guidelines:
 
 1. Require SynThread with the alias `->` like this:
 ```clojure
@@ -58,4 +58,71 @@ general rule.
        :b ;; type changed from map to number
        inc)
    ;; returns 3
+```
+
+4. Use `->/as` to put the threaded value (or "topic") into a named
+local variable. This is useful when you need to call a function or
+macro that needs access to the topic in some parameter slot other than
+the first:
+```clojure
+   (-> {:a 1 :b 2}
+     (->/assoc :a inc)
+     (->/as topic
+       (->/when (> (:b topic) 10)
+         (->/assoc :large-b true))))
+```
+Standard destructuring is supported by `->/as`:
+```clojure
+   (-> {:a 1 :b 2}
+     (->/assoc :a inc)
+     (->/as {:keys [b]}
+       (->/when (> b 10)
+         (->/assoc :large-b true))))
+```
+Additionally, a special destructuring form is supported allowing the
+use of functions. Passing a threaded form will implicity insert the
+topic at the front and use the last argument as the binding label. For
+example:
+```clojure
+   (-> {:a 1 :b 2}
+     (->/as (-> vals (->/apply max) max-val)
+       (->/when (> max-val 10)
+         (->/assoc :large-val true))))
+```
+
+5. Clojure's `do` and `doto` macros are useful in these threading
+contexts, so don't be afraid to use them. `do` let's you stop
+threading, and yet pass a result to the next threaded step:
+```clojure
+   (-> {:a 1 :b 2}
+     (->/assoc :a inc)
+     (->/when we-should-reset?
+       (do {:a 0 :b 0}))  ;; see also the ->/reset function
+     (->/assoc :b inc))
+```
+This can be particularly useful in conjunction with `->/as`:
+```clojure
+   (-> {10 :orig, 20 :orig}
+     (->/as topic
+       (do
+         (reduce #(assoc %1 %2 :default) topic (range 5)))))
+```
+On the other hand, `doto` is nice when you do *not* want to pass a
+result to the next step:
+```clojure
+   (-> {:a 1 :b 2}
+       (doto prn)
+       (->/assoc :a inc))
+```
+The debugging `prn` above works, but the patten rapidly becomes
+awkward if you want to provide a label to the prn. That would actually
+require a combination of `->/as` to label it and `do` to prevent the
+topic from being printed before the label because of threading. This
+is exactly the purpose of `->/aside`:
+```clojure
+    (-> {:a 1 :b 2}
+       (->/aside topic        ;; note the body is entirely unthreaded
+          (prn :topic topic)
+          (println "Note: b is currently" (:b topic))) ;; return value is ignored
+       (->/assoc :a inc))
 ```
