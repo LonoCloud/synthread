@@ -16,7 +16,7 @@ SynThread is available from clojars. Add it to your Leiningen project.clj:
 See [unit tests](http://github.com/LonoCloud/synthread/blob/master/test/lonocloud/synthread/test.clj#L11)
 for specific examples of each macro.
 
-Some style guidelines:
+Some general guidelines:
 
 1. Require SynThread with the alias `->` like this:
 ```clojure
@@ -36,13 +36,13 @@ This clearly identifies the topic to be threaded.
              :last first)
 ```
 
-3. Don't change the type (or shape) of the topic as it flows through.  In our
-experience, `->` macros are used to either dig into a deep data structure
-massaging the topic the deeper it goes or `->` macros are used to build a
+3. Don't change the type (or shape) of the topic as it flows through. In our
+experience, the threading macros are used to either dig into a deep data
+structure massaging the topic the deeper it goes or are used to build a
 result by descrbing a pipeline of operations. The main difference between
 digging and building is that the type and shape of the threaded topic is
-changing or is constant respectively. We use these macros for builders as a
-general rule.
+changing or is constant respectively. We use synthread macros for building as
+a general rule.
 ```clojure
    ;; good
    (-> {:a 1 :b 2}
@@ -143,5 +143,4 @@ argument (similar to Clojure's `apply`).
        (->/apply conj [1 2 3])  ;; => (conj [] 1 2 3)
        (->/apply [conj 4 5 6])) ;; also works!
    ;; returns [1 2 3 4 5 6]
-
 ```
