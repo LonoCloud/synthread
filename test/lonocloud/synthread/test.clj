@@ -1,6 +1,6 @@
 (ns lonocloud.synthread.test
-  (:require [lonocloud.synthread :as ->]
-            [clojure.test :refer [deftest is]]))
+  (:require [lonocloud.synthread :as ->])
+  (:use [clojure.test :only [deftest is]]))
 
 (defmacro ->is [x binop v]
   (let [xx '<topic>]
