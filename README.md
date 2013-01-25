@@ -39,24 +39,24 @@ This clearly identifies the topic to be threaded.
 3. Don't change the type (or shape) of the topic as it flows through. In our
 experience, the threading macros are used to either dig into a deep data
 structure massaging the topic the deeper it goes or are used to build a
-result by descrbing a pipeline of operations. The main difference between
+result by describing a pipeline of operations. The main difference between
 digging and building is that the type and shape of the threaded topic is
 changing or is constant respectively. We use synthread macros for building as
 a general rule.
 ```clojure
    ;; good
    (-> {:a 1 :b 2}
-       (->/assoc :a inc)
-       (->/in [:b]
-         (->/for [n (range 3)]
-           (inc n))))
+     (->/assoc :a inc)
+     (->/in [:b]
+       (->/for [n (range 3)]
+         (inc n))))
    ;; returns {:a 2 :b 5}
 
    ;; bad
    (-> {:a 1 :b 2}
-       (->/assoc :a inc)
-       :b ;; type changed from map to number
-       inc)
+     (->/assoc :a inc)
+     :b ;; type changed from map to number
+     inc)
    ;; returns 3
 ```
 
@@ -67,7 +67,7 @@ the first:
 ```clojure
    (-> {:a 1 :b 2}
      (->/assoc :a inc)
-     (->/as topic
+     (->/as topic                             ;; label topic
        (->/when (> (:b topic) 10)
          (->/assoc :large-b true))))
 ```
@@ -75,7 +75,7 @@ Standard destructuring is supported by `->/as`:
 ```clojure
    (-> {:a 1 :b 2}
      (->/assoc :a inc)
-     (->/as {:keys [b]}
+     (->/as {:keys [b]}                       ;; descructure topic
        (->/when (> b 10)
          (->/assoc :large-b true))))
 ```
@@ -85,7 +85,7 @@ topic at the front and use the last argument as the binding label. For
 example:
 ```clojure
    (-> {:a 1 :b 2}
-     (->/as (-> vals (->/apply max) max-val)
+     (->/as (-> vals (->/apply max) max-val)  ;; use functions on topic
        (->/when (> max-val 10)
          (->/assoc :large-val true))))
 ```
@@ -97,7 +97,7 @@ threading, and yet pass a result to the next threaded step:
    (-> {:a 1 :b 2}
      (->/assoc :a inc)
      (->/when we-should-reset?
-       (do {:a 0 :b 0}))  ;; see also the ->/reset function
+       (do {:a 0 :b 0}))  ;; see also ->/reset function
      (->/assoc :b inc))
 ```
 This can be particularly useful in conjunction with `->/as`:
@@ -139,8 +139,8 @@ argument (similar to Clojure's `apply`).
    ;; returns true
 
    ;; example of ->/apply
-   (-> []
-       (->/apply conj [1 2 3])  ;; => (conj [] 1 2 3)
-       (->/apply [conj 4 5 6])) ;; also works!
-   ;; returns [1 2 3 4 5 6]
+   (-> [0]
+     (->/apply conj [1 2 3])  ;; => (conj [0] 1 2 3)
+     (->/apply [conj 4 5 6])) ;; also works!
+   ;; returns [0 1 2 3 4 5 6]
 ```
