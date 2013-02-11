@@ -130,6 +130,12 @@
               (+ a b))
       (->is = 9)))
 
+(deftest test-fn
+  (let [add-n (->/fn [n] (+ n))]
+    (-> 1
+      (add-n 2)
+      (->is = 3))))
+
 (deftest test-as
   (-> 10
       (->/as ten

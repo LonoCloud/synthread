@@ -1,6 +1,6 @@
 (ns lonocloud.synthread
-  (:refer-clojure :exclude [apply assoc keys cond first for last let
-                            nth rest second vals when when-let
+  (:refer-clojure :exclude [apply assoc keys cond first fn for last
+                            let nth rest second vals when when-let
                             when-not]))
 (alias 'clj 'clojure.core)
 
@@ -51,7 +51,7 @@
   [x & test-form-pairs]
   (clj/let [xx (gensym)]
            `(clj/let [~xx ~x]
-                     (clj/cond ~@(mapcat (fn [[test form]] `[~test (-> ~xx ~form)])
+                     (clj/cond ~@(mapcat (clj/fn [[test form]] `[~test (-> ~xx ~form)])
                                          (partition 2 test-form-pairs))
                                :else ~xx))))
 
@@ -113,7 +113,7 @@
        (clj/assoc ~xx
          ~@(->> key-form-pairs
                 (partition 2)
-                (mapcat (fn [[key form]]
+                (mapcat (clj/fn [[key form]]
                           [key `(-> (get ~xx ~key) ~form)])))))))
 
 (defmacro in
@@ -122,7 +122,7 @@
   [x path & body]
   `(if (empty? ~path)
      (-> ~x ~@body)
-     (update-in ~x ~path (fn [x#] (-> x# ~@body)))))
+     (update-in ~x ~path (clj/fn [x#] (-> x# ~@body)))))
 
 (defmacro keys
   "EXPERIMENTAL Thread keys in x through body."
@@ -145,6 +145,14 @@
   `(clj/let [~@bindings
              x# ~x]
      (-> x# ~@body)))
+
+;; TODO defn
+(defmacro fn
+  "Thread x into body of fn. (inspired by Prismatic's fn->).
+  (let [add-n (->/fn [n] (+ n))]
+    (-> 1 (add-n 2))) ;; returns 3"
+  [args & body]
+  `(clj/fn [x# ~@args] (-> x# ~@body)))
 
 ;; Labeling forms (as, as-do, as-to)
 ;; +----- label value x
