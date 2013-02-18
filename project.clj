@@ -10,7 +10,7 @@
              :1.3 {:dependencies [[org.clojure/clojure "1.3.0"]]}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}
              :1.5 {:dependencies [[org.clojure/clojure "1.5.0-RC2"]]}}
-  :aliases {"1.2" ["with-profile" "1.2" "test"]
-            "1.3" ["with-profile" "1.3" "test"]
-            "1.4" ["with-profile" "1.4" "test"]
-            "1.5" ["with-profile" "1.5" "test"]})
+  :aliases {"1.2" ["with-profile" "1.2"]
+            "1.3" ["with-profile" "1.3"]
+            "1.4" ["with-profile" "1.4"]
+            "1.5" ["with-profile" "1.5"]})
