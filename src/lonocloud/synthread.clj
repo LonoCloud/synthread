@@ -1,8 +1,6 @@
 (ns lonocloud.synthread
-  (:refer-clojure :exclude [apply assoc defn keys cond first fn for
-                            last let nth rest second vals when
-                            if-let when-let when-not]))
-(alias 'clj 'clojure.core)
+  (:use [lonocloud.synthread.isolate :only [isolate-ns]]))
+(isolate-ns :as ->)
 
 ;; TODO review performance of nth and last.
 
@@ -12,7 +10,7 @@
   the else form.
   (-> 5 (->/if should-inc? inc dec))"
   [x pred then else]
-  `(clj/let [x# ~x]
+  `(let [x# ~x]
      (if ~pred
        (-> x# ~then)
        (-> x# ~else))))
@@ -26,8 +24,8 @@
       (assoc :was-bar false)))
   ;; returns {:foo :bar}"
   [x [local pred] then else]
-  `(clj/let [x# ~x]
-     (clj/if-let [~local ~pred]
+  `(let [x# ~x]
+     (if-let [~local ~pred]
        (-> x# ~then)
        (-> x# ~else))))
 
@@ -35,7 +33,7 @@
   "If pred is true, thread x through body, otherwise return x unchanged.
   (-> 5 (->/when should-inc? inc))"
   [x pred & body]
-  `(clj/let [x# ~x]
+  `(let [x# ~x]
      (if ~pred
        (-> x# ~@body)
        x#)))
@@ -44,7 +42,7 @@
   "If pred is false, thread x through body, otherwise return x unchanged.
   (-> 5 (->/when should-inc? inc))"
   [x pred & body]
-  `(clj/let [x# ~x]
+  `(let [x# ~x]
      (if ~pred
        x#
        (-> x# ~@body))))
@@ -54,8 +52,8 @@
   otherwise return x unchanged.
   (-> 5 (->/when-let [amount (:amount foo)] (+ amount)))"
   [x bindings & forms]
-  `(clj/let [x# ~x]
-     (clj/if-let ~bindings
+  `(let [x# ~x]
+     (if-let ~bindings
        (-> x# ~@forms)
        x#)))
 
@@ -63,18 +61,18 @@
   "EXPERIMENTAL Thread x through forms in each clause. Return x if no test matches.
   (->/cond [1 2] true (conj 3) false pop)"
   [x & test-form-pairs]
-  (clj/let [xx (gensym)]
-           `(clj/let [~xx ~x]
-                     (clj/cond ~@(mapcat (clj/fn [[test form]] `[~test (-> ~xx ~form)])
-                                         (partition 2 test-form-pairs))
-                               :else ~xx))))
+  (let [xx (gensym)]
+    `(let [~xx ~x]
+       (cond ~@(mapcat (fn [[test form]] `[~test (-> ~xx ~form)])
+                       (partition 2 test-form-pairs))
+             :else ~xx))))
 
 (defmacro for
   "Thread x through each iteration of body. Uses standard looping
   binding syntax for iterating.
   (->/for 4 [x [1 2 3]] (+ x)) ;; returns 10"
   [x seq-exprs & body]
-  `(clj/let [box# (clojure.lang.Box. ~x)]
+  `(let [box# (clojure.lang.Box. ~x)]
      (doseq ~seq-exprs
        (set! (.val box#) (-> (.val box#) ~@body)))
      (.val box#)))
@@ -83,51 +81,51 @@
   "Thread the first element of x through body.
   (->/first [1 2 3] inc -) ;; returns [-2 2 3]"
   [x & body]
-  `(clj/let [x# ~x]
-     (cons (-> (clj/first x#) ~@body)
-           (clj/rest x#))))
+  `(let [x# ~x]
+     (cons (-> (first x#) ~@body)
+           (rest x#))))
 
 (defmacro second
   "Thread the second element of x through body.
   (->/second [1 2 3] inc -) ;; returns [1 -3 3]"
   [x & body]
-  `(clj/let [x# ~x]
-            (cons (clj/first x#)
-                  (cons (-> (clj/second x#) ~@body)
-                        (drop 2 x#)))))
+  `(let [x# ~x]
+     (cons (first x#)
+           (cons (-> (second x#) ~@body)
+                 (drop 2 x#)))))
 
 (defmacro nth
   "EXPERIMENTAL Thread the nth element of x through body.
   (->/nth [1 2 3] 1 inc -) ;; returns [1 -3 3]"
   [x n & body]
-  `(clj/let [x# ~x]
-            (concat (take ~n x#)
-                    (cons (-> (clj/nth x# ~n) ~@body)
-                          (drop (inc ~n) x#)))))
+  `(let [x# ~x]
+     (concat (take ~n x#)
+             (cons (-> (nth x# ~n) ~@body)
+                   (drop (inc ~n) x#)))))
 
 (defmacro last
   "EXPERIMENTAL Thread the last element of x through body.
   (->/last [1 2 3] inc -) ;; returns [1 2 -4]"
   [x & body]
-  `(clj/let [x# ~x]
-            (concat (drop-last 1 x#)
-                    [(-> (clj/last x#) ~@body)])))
+  `(let [x# ~x]
+     (concat (drop-last 1 x#)
+             [(-> (last x#) ~@body)])))
 
 (defmacro rest
   "EXPERIMENTAL Thread the rest of items in x through body."
   [x & body]
-  `(clj/let [x# ~x] (cons (clj/first x#)
-                          (-> (clj/rest x#) ~@body))))
+  `(let [x# ~x] (cons (first x#)
+                      (-> (rest x#) ~@body))))
 
 (defmacro assoc
   "Thread the value at each key through the pair form."
   [x & key-form-pairs]
-  (clj/let [xx (gensym)]
-    `(clj/let [~xx ~x]
-       (clj/assoc ~xx
+  (let [xx (gensym)]
+    `(let [~xx ~x]
+       (assoc ~xx
          ~@(->> key-form-pairs
                 (partition 2)
-                (mapcat (clj/fn [[key form]]
+                (mapcat (fn [[key form]]
                           [key `(-> (get ~xx ~key) ~form)])))))))
 
 (defmacro in
@@ -136,37 +134,36 @@
   [x path & body]
   `(if (empty? ~path)
      (-> ~x ~@body)
-     (update-in ~x ~path (clj/fn [x#] (-> x# ~@body)))))
+     (update-in ~x ~path (fn [x#] (-> x# ~@body)))))
 
 (defmacro keys
   "EXPERIMENTAL Thread keys in x through body."
   [x & body]
-  `(clj/let [x# ~x]
-            (zipmap (-> x# clj/keys ~@body)
-                    (-> x# clj/vals))))
+  `(let [x# ~x]
+     (zipmap (-> x# keys ~@body)
+             (-> x# vals))))
 
 (defmacro vals
   "EXPERIMENTAL Thread values in x through body."
   [x & body]
-  `(clj/let [x# ~x]
-            (zipmap (-> x# clj/keys)
-                    (-> x# clj/vals ~@body))))
+  `(let [x# ~x]
+     (zipmap (-> x# keys)
+             (-> x# vals ~@body))))
 
 (defmacro let
   "Thread x through body (with bindings available as usual).
   (->/let 4 [x 3] (+ x) (- x)) ;; returns 4"
   [x bindings & body]
-  `(clj/let [~@bindings
-             x# ~x]
+  `(let [~@bindings
+         x# ~x]
      (-> x# ~@body)))
 
-;; TODO defn
 (defmacro fn
   "Thread x into body of fn. (inspired by Prismatic's fn->).
   (let [add-n (->/fn [n] (+ n))]
     (-> 1 (add-n 2))) ;; returns 3"
   [args & body]
-  `(clj/fn [x# ~@args] (-> x# ~@body)))
+  `(fn [x# ~@args] (-> x# ~@body)))
 
 ;; Labeling forms (as, as-do, as-to)
 ;; +----- label value x
@@ -187,34 +184,34 @@
    EXPERIMENTALLY supports arbitrary threading form in place of binding form."
   [x binding & body]
   (if (seq? binding)
-    `(clj/let [x# ~x
-               ~(clj/last binding) (-> x# ~(drop-last binding))]
+    `(let [x# ~x
+           ~(last binding) (-> x# ~(drop-last binding))]
        (-> x# ~@body))
-    `(clj/let [x# ~x
-               ~binding x#]
+    `(let [x# ~x
+           ~binding x#]
        (-> x# ~@body))))
 
 (defmacro aside
-  "EXPERIMENTAL Bind value of x, evaluate unthreaded body and return x."
+  "Bind value of x, evaluate unthreaded body and return x."
   [x binding & body]
-  `(doto ~x (as ~binding (do ~@body))))
+  `(doto ~x (->/as ~binding (do ~@body))))
 
 (defmacro each
   "EXPERIMENTAL Thread each item in x through body."
   [x & body]
-  `(clj/for [x# ~x] (-> x# ~@body)))
+  `(for [x# ~x] (-> x# ~@body)))
 
 (defmacro each-as
   "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
   [x binding & body]
-  `(clj/for [x# ~x] (as x# ~binding ~@body)))
+  `(for [x# ~x] (->/as x# ~binding ~@body)))
 
-(clj/defn apply
+(defn apply
   "Apply f to x and args."
   [x & f-args]
-  (clj/let [[f & args] (concat (drop-last f-args) (clj/last f-args))]
-           (clj/apply f x args)))
+  (let [[f & args] (concat (drop-last f-args) (last f-args))]
+    (apply f x args)))
 
-(clj/defn reset
+(defn reset
   "Replace x with y."
   [x y] y)
