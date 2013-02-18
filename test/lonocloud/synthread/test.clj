@@ -15,6 +15,18 @@
       (->/if false inc dec)
       (->is = 0)))
 
+(deftest test-if-let
+  (-> {}
+    (->/let [x :orig]
+      (->/if-let [x :foo]
+        (assoc :yes x)
+        (assoc :no x))
+      (->is = {:yes :foo})
+      (->/if-let [x false]
+        (assoc :yes x)
+        (assoc :no x))
+      (->is = {:yes :foo, :no :orig}))))
+
 (deftest test-when
   (-> 0
       (->/when false

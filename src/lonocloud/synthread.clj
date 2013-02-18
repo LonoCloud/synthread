@@ -1,7 +1,7 @@
 (ns lonocloud.synthread
-  (:refer-clojure :exclude [apply assoc keys cond first fn for last
-                            let nth rest second vals when when-let
-                            when-not]))
+  (:refer-clojure :exclude [apply assoc defn keys cond first fn for
+                            last let nth rest second vals when
+                            if-let when-let when-not]))
 (alias 'clj 'clojure.core)
 
 ;; TODO review performance of nth and last.
@@ -14,6 +14,20 @@
   [x pred then else]
   `(clj/let [x# ~x]
      (if ~pred
+       (-> x# ~then)
+       (-> x# ~else))))
+
+(defmacro if-let
+  "Thread x through then or else depending on the value of pred. If
+  pred is true, bind local to pred.
+  (-> {}
+    (->/if-let [x :bar]
+      (assoc :foo x)
+      (assoc :was-bar false)))
+  ;; returns {:foo :bar}"
+  [x [local pred] then else]
+  `(clj/let [x# ~x]
+     (clj/if-let [~local ~pred]
        (-> x# ~then)
        (-> x# ~else))))
 
@@ -41,7 +55,7 @@
   (-> 5 (->/when-let [amount (:amount foo)] (+ amount)))"
   [x bindings & forms]
   `(clj/let [x# ~x]
-     (if-let ~bindings
+     (clj/if-let ~bindings
        (-> x# ~@forms)
        x#)))
 
@@ -195,12 +209,12 @@
   [x binding & body]
   `(clj/for [x# ~x] (as x# ~binding ~@body)))
 
-(defn apply
+(clj/defn apply
   "Apply f to x and args."
   [x & f-args]
   (clj/let [[f & args] (concat (drop-last f-args) (clj/last f-args))]
            (clj/apply f x args)))
 
-(defn reset
+(clj/defn reset
   "Replace x with y."
   [x y] y)
