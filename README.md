@@ -144,3 +144,6 @@ argument (similar to Clojure's `apply`).
      (->/apply [conj 4 5 6])) ;; also works!
    ;; returns [0 1 2 3 4 5 6]
 ```
+
+7. Some of the macros are marked EXPERIMENTAL to reflect the fact that
+they have seen little or no use in our live code.
