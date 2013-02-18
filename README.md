@@ -1,7 +1,7 @@
 # Syntax Threading Library
 
 Extentions of Clojure's standard -> macro used to build code blocks that
-operate on a threaded topic. See also: test-> in recent Clojure versions.
+operate on a threaded topic.
 
 # Including in your project.clj
 
@@ -29,11 +29,11 @@ This clearly identifies the topic to be threaded.
 ```clojure
    ;; good
    (-> {:first "John" :last "Smith"}
-       (->/assoc :last first))
+       (->/assoc :last first)) ;; replace last name with last initial
 
    ;; bad
    (->/assoc {:first "John" :last "Smith"}
-             :last first)
+             :last first) ;; replace last name with last initial
 ```
 
 3. Don't change the type (or shape) of the topic as it flows through. In our
@@ -147,6 +147,18 @@ argument (similar to Clojure's `apply`).
 
 7. Some of the macros are marked EXPERIMENTAL to reflect the fact that
 they have seen little or no use in our live code.
+
+# Related work
+
+This is not the first library to have sailed these waters. Some that
+we were aware of during the design of SynThread include:
+
+- Clojure 1.5: `cond->`, `as->`, `when->`
+- [Pallet thread-expr](https://github.com/pallet/thread-expr): `arg->`, `for->`, `when->`, `let->`, etc.
+- [Sierra's Syntactic Pipelines](http://stuartsierra.com/2012/09/12/when-to-write-a-macro): `defpipe`
+- [Prismatic plumbing](https://github.com/Prismatic/plumbing/blob/master/src/plumbing/core.clj#L210): `fn->`
+- [Levy's swiss-arrows](https://github.com/rplevy/swiss-arrows): `-<>`, `-?<>`, `-<><:p`, etc.
+- [`core.incubator`](https://github.com/clojure/core.incubator): `-?>`, `-?>>`, `.?.`, etc.
 
 # Copyright
 © LonoCloud. All rights reserved.
