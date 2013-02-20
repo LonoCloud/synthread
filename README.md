@@ -8,7 +8,7 @@ operate on a threaded topic.
 SynThread is available from clojars. Add it to your Leiningen project.clj:
 
 ```clojure
-   [lonocloud/synthread "1.0.0"]
+   [lonocloud/synthread "1.0.1"]
 ```
 
 # Usage

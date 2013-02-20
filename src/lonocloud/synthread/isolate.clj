@@ -9,11 +9,12 @@
     (alias sym ns)))
 
 (defn split-def [def-macro [def-name & def-tail]]
-  `(do
-     (~def-macro v# ~@def-tail)
-     (ns-unmap 'lonocloud.synthread '~def-name)
-     (intern 'lonocloud.synthread (with-meta '~def-name (meta #'v#))
-             @#'v#)))
+  (let [tmp (gensym (str def-name "-"))]
+    `(do
+       (~def-macro ~tmp ~@def-tail)
+       (ns-unmap 'lonocloud.synthread '~def-name)
+       (intern 'lonocloud.synthread (with-meta '~def-name (meta (var ~tmp)))
+               (deref (var ~tmp))))))
 
 (defmacro isolate-ns
   "Isolate the body of each definition (defaulting to defn's and
