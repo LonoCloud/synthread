@@ -91,7 +91,7 @@ example:
 ```
 
 5. Clojure's `do` and `doto` macros are useful in these threading
-contexts, so don't be afraid to use them. `do` let's you stop
+contexts, so don't be afraid to use them. `do` lets you stop
 threading, and yet pass a result to the next threaded step:
 ```clojure
    (-> {:a 1 :b 2}
