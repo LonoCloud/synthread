@@ -1,6 +1,6 @@
 # Syntax Threading Library
 
-Extentions of Clojure's standard -> macro used to build code blocks that
+Extensions of Clojure's standard -> macro used to build code blocks that
 operate on a threaded topic.
 
 # Including in your project.clj
