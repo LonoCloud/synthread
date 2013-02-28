@@ -2,7 +2,8 @@
   (:use [lonocloud.synthread.isolate :only [isolate-ns]]))
 (isolate-ns :as ->)
 
-;; TODO review performance of nth and last.
+;; Section 1: macros that do not update the topic.
+;;            Generally control flow macros.
 
 ;; (oh yeah. we're messing with if :-)
 (defmacro if
@@ -77,6 +78,58 @@
        (set! (.val box#) (-> (.val box#) ~@body)))
      (.val box#)))
 
+(defmacro let
+  "Thread x through body (with bindings available as usual).
+  (->/let 4 [x 3] (+ x) (- x)) ;; returns 4"
+  [x bindings & body]
+  `(let [~@bindings
+         x# ~x]
+     (-> x# ~@body)))
+
+(defmacro fn
+  "Thread x into body of fn. (inspired by Prismatic's fn->).
+  (let [add-n (->/fn [n] (+ n))]
+    (-> 1 (add-n 2))) ;; returns 3"
+  [args & body]
+  `(fn [x# ~@args] (-> x# ~@body)))
+
+;; Section 2: Macros that access or update the topic.
+
+;; TODO review performance of nth and last.
+;; TODO Preserve the type of topic when digging into it with each,
+;; each-as, first, second, etc
+
+;; Labeling forms (as, as-do, as-to)
+;; +----- label value x
+;; | +--- modify value x
+;; | | +- thread value x
+;; | | |
+;; 0 0 0 (doto x (do ...))     ;; for side effects, no access to the topic: (prn "hello")
+;; 0 0 1 (doto x (-> ...))     ;; almost but not quite (doto x ...) threading but with chained side-effects?
+;; 0 1 0 (do x ...)
+;; 0 1 1 (-> x ...)
+;; 1 0 0 (->/aside x ...)      ;; equivilent to (doto (->/as x (do ...)))
+;; 1 0 1 (doto x (->/as ...))
+;; 1 1 0 (->/as x (do .... ))  ;; mention in style guide
+;; 1 1 1 (->/as x ...)
+
+(defmacro as
+  "Bind value of x and thread x through body.
+   EXPERIMENTALLY supports arbitrary threading form in place of binding form."
+  [x binding & body]
+  (if (seq? binding)
+    `(let [x# ~x
+           ~(last binding) (-> x# ~(drop-last binding))]
+       (-> x# ~@body))
+    `(let [x# ~x
+           ~binding x#]
+       (-> x# ~@body))))
+
+(defmacro aside
+  "Bind value of x, evaluate unthreaded body and return x."
+  [x binding & body]
+  `(doto ~x (->/as ~binding (do ~@body))))
+
 (defmacro first
   "Thread the first element of x through body.
   (->/first [1 2 3] inc -) ;; returns [-2 2 3]"
@@ -150,52 +203,6 @@
      (zipmap (-> x# keys)
              (-> x# vals ~@body))))
 
-(defmacro let
-  "Thread x through body (with bindings available as usual).
-  (->/let 4 [x 3] (+ x) (- x)) ;; returns 4"
-  [x bindings & body]
-  `(let [~@bindings
-         x# ~x]
-     (-> x# ~@body)))
-
-(defmacro fn
-  "Thread x into body of fn. (inspired by Prismatic's fn->).
-  (let [add-n (->/fn [n] (+ n))]
-    (-> 1 (add-n 2))) ;; returns 3"
-  [args & body]
-  `(fn [x# ~@args] (-> x# ~@body)))
-
-;; Labeling forms (as, as-do, as-to)
-;; +----- label value x
-;; | +--- modify value x
-;; | | +- thread value x
-;; | | |
-;; 0 0 0 (doto x (do ...))     ;; for side effects, no access to the topic: (prn "hello")
-;; 0 0 1 (doto x (-> ...))     ;; almost but not quite (doto x ...) threading but with chained side-effects?
-;; 0 1 0 (do x ...)
-;; 0 1 1 (-> x ...)
-;; 1 0 0 (->/aside x ...)      ;; equivilent to (doto (->/as x (do ...)))
-;; 1 0 1 (doto x (->/as ...))
-;; 1 1 0 (->/as x (do .... ))  ;; mention in style guide
-;; 1 1 1 (->/as x ...)
-
-(defmacro as
-  "Bind value of x and thread x through body.
-   EXPERIMENTALLY supports arbitrary threading form in place of binding form."
-  [x binding & body]
-  (if (seq? binding)
-    `(let [x# ~x
-           ~(last binding) (-> x# ~(drop-last binding))]
-       (-> x# ~@body))
-    `(let [x# ~x
-           ~binding x#]
-       (-> x# ~@body))))
-
-(defmacro aside
-  "Bind value of x, evaluate unthreaded body and return x."
-  [x binding & body]
-  `(doto ~x (->/as ~binding (do ~@body))))
-
 (defmacro each
   "EXPERIMENTAL Thread each item in x through body."
   [x & body]
@@ -205,6 +212,8 @@
   "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
   [x binding & body]
   `(for [x# ~x] (->/as x# ~binding ~@body)))
+
+;; Section 3: Additional helper functions.
 
 (defn apply
   "Apply f to x and args."
