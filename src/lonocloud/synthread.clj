@@ -13,8 +13,9 @@
   [x & body]
   (let [val (rand-int Integer/MAX_VALUE)
         do-asserts (gensym "do-asserts-")]
-    `(-> ~x
-       (->/let [~do-asserts (impl/iobj? ~val)]
+    `(let [x# ~x
+           ~do-asserts (impl/iobj? x#)]
+       (-> x#
          (impl/mark ~val)
          ~@(mapcat (fn [form form-num]
                      [form `(impl/assert-mark ~val ~do-asserts

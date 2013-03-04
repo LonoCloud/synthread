@@ -16,7 +16,7 @@
       (->is = 0)))
 
 (deftest test-if-let
-  (-> {}
+  (->/do {}
     (->/let [x :orig]
       (->/if-let [x :foo]
         (assoc :yes x)
@@ -87,7 +87,7 @@
   (is (thrown? Exception
                (->/do [1 2 3]
                  str
-                 (->is = [])))))
+                 (->is = "[1 2 3]")))))
 
 (deftest test-do-non-iobj
   (->/do 10
@@ -123,14 +123,14 @@
       (->is = [0 2 3])))
 
 (deftest test-assoc
-  (-> {:a 1 :b 2}
+  (->/do {:a 1 :b 2}
       (->/assoc
        :a dec
        :b (* 2))
       (->is = {:a 0 :b 4})))
 
 (deftest test-in
-  (-> {:a {:b {:c 10}}}
+  (->/do {:a {:b {:c 10}}}
       (->/in [:a :b :c]
              (/ 2)
              inc
@@ -167,7 +167,7 @@
       (->is = 20)))
 
 (deftest test-as-with-arrow
-  (-> {:a {:delta 1} :b 2}
+  (->/do {:a {:delta 1} :b 2}
       (->/as (-> :a :delta delta)
              (->/assoc :b (+ delta)))
       (->is = {:a {:delta 1} :b 3})))

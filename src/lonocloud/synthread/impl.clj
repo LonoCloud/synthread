@@ -16,5 +16,5 @@
 
 (defn mark [x val]
   (if (iobj? x)
-    (with-meta x {::mark ~val})
+    (with-meta x {::mark val})
     x))
