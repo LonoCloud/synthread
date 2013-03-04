@@ -188,3 +188,8 @@
   (-> 10
       (->/apply + [1 2])
       (->is = 13)))
+
+;; Just try this a bunch to make sure isolate.clj isn't doing wrong.
+(deftest test-reloading
+  (dotimes [_ 5]
+    (require '[lonocloud.synthread :as ->] :reload-all)))

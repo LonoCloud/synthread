@@ -3,17 +3,21 @@
 (defn copy-ns-from [from-ns]
   (doseq [[sym target] (ns-map from-ns)]
     (if (var? target)
-      (.refer *ns* sym target)
+      (when-not (::isolated (meta target))
+        (.refer *ns* sym target))
       (.importClass *ns* sym target)))
   (doseq [[sym ns] (ns-aliases from-ns)]
     (alias sym (symbol (str ns)))))
 
-(defn split-def [def-macro [def-name & def-tail]]
-  (let [tmp (gensym (str def-name "-"))]
+(defn split-def [orig-ns def-macro [def-name & def-tail]]
+  (let [tmp (with-meta (symbol (str "__" def-name))
+              (meta def-name))]
     `(do
        (~def-macro ~tmp ~@def-tail)
-       (ns-unmap 'lonocloud.synthread '~def-name)
-       (intern 'lonocloud.synthread (with-meta '~def-name (meta (var ~tmp)))
+       (ns-unmap '~orig-ns '~def-name)
+       (intern '~orig-ns (with-meta '~def-name
+                           (assoc (meta (var ~tmp))
+                             ::isolated true))
                (deref (var ~tmp))))))
 
 (defmacro isolate-ns
@@ -35,4 +39,4 @@
            `(do
               (ns-unmap *ns* '~unqualified-macro)
               (clojure.core/defmacro ~unqualified-macro [& everything#]
-                (split-def '~macro everything#)))))))
+                (split-def '~orig-ns '~macro everything#)))))))
