@@ -137,15 +137,17 @@
              (->is = 6))
       (->is = {:a {:b {:c 6}}})))
 
-(deftest test-keys
-  (-> {1 10, 2 20, 3 30}
-      (->/keys (->> (map inc)))
-      (->is = {2 10, 3 20, 4 30})))
+(deftest test-key
+  (->/do {1 10, 2 20, 3 30}
+    (->/each
+     (->/key inc))
+    (->is = {2 10, 3 20, 4 30})))
 
-(deftest test-vals
-  (-> {1 10, 2 20, 3 30}
-      (->/vals (->> (map inc)))
-      (->is = {1 11, 2 21, 3 31})))
+(deftest test-val
+  (->/do {1 10, 2 20, 3 30}
+    (->/each
+     (->/val inc))
+    (->is = {1 11, 2 21, 3 31})))
 
 (deftest test-let
   (-> 1
@@ -181,14 +183,44 @@
 
 (deftest test-each
   (-> (range 5)
-      (->/each (* 2))
-      (->is = [0 2 4 6 8])))
+    (->/each (* 2))
+    (->is = [0 2 4 6 8]))
+
+  (->/do {"a" 1 "b" 2}
+    (->/each
+     (->/key keyword)
+     (->/val -))
+    (->is = {:a -1 :b -2}))
+
+  (->/do [0 1 2 3 4]
+    (->/each (* 2))
+    (->is = [0 2 4 6 8]))
+
+  (->/do {1 2, 3 4, 5 6}
+    (->/each reverse vec)
+    (->is = {2 1, 4 3, 6 5}))
+
+  (->/do {1 2, 3 4, 5 6}
+    (->/each
+     (->/assoc 0 (* 10)
+               1 (+ 10)))
+    (->is = {10 12, 30 14, 50 16})))
 
 (deftest test-each-as
   (-> (range 5)
       (->/each-as x
                   (+ x))
-      (->is = [0 2 4 6 8])))
+      (->is = [0 2 4 6 8]))
+
+  (->/do {1 2, 3 4, 5 6}
+    (->/each-as [k v]
+      (do [v k]))
+    (->is = {2 1, 4 3, 6 5}))
+
+  (->/do {1 2, 3 4, 5 6}
+    (->/each-as [k v]
+      (do [(* 10 k) (+ 10 v)]))
+    (->is = {10 12, 30 14, 50 16})))
 
 (deftest test-reset
   (-> 0

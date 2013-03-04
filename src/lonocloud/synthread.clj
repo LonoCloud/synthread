@@ -207,29 +207,29 @@
      (-> ~x ~@body)
      (update-in ~x ~path (fn [x#] (-> x# ~@body)))))
 
-(defmacro keys
-  "EXPERIMENTAL Thread keys in x through body."
-  [x & body]
-  `(let [x# ~x]
-     (zipmap (-> x# keys ~@body)
-             (-> x# vals))))
-
-(defmacro vals
-  "EXPERIMENTAL Thread values in x through body."
-  [x & body]
-  `(let [x# ~x]
-     (zipmap (-> x# keys)
-             (-> x# vals ~@body))))
-
 (defmacro each
   "EXPERIMENTAL Thread each item in x through body."
   [x & body]
-  `(for [x# ~x] (-> x# ~@body)))
+  `(let [x# ~x
+         m# (meta x#)]
+     (with-meta
+       (clojure.walk/walk #(-> % ~@body) identity ~x)
+       m#)))
 
 (defmacro each-as
   "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
   [x binding & body]
-  `(for [x# ~x] (->/as x# ~binding ~@body)))
+  `(->/each ~x (->/as ~binding ~@body)))
+
+(defmacro key
+  "Thread the key in x through body (x must be a MapEntry)."
+  [x & body]
+  `(let [x# ~x] (clojure.lang.MapEntry. (-> (key x#) ~@body) (val x#))))
+
+(defmacro val
+  "Thread the value in x through body (x must be a MapEntry)."
+  [x & body]
+  `(let [x# ~x] (clojure.lang.MapEntry. (key x#) (-> (val x#) ~@body))))
 
 ;; Section 3: Additional helper functions.
 
