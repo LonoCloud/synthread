@@ -8,7 +8,7 @@ operate on a threaded topic.
 SynThread is available from clojars. Add it to your Leiningen project.clj:
 
 ```clojure
-   [lonocloud/synthread "1.0.1"]
+   [lonocloud/synthread "1.0.2"]
 ```
 
 # Usage
@@ -24,7 +24,7 @@ Some general guidelines:
      (:require [lonocloud.synthread :as ->]))
 ```
 
-2. Always start a threaded block with Clojure's standard `->` macro.
+2. Always start a threaded block with Clojure's standard `->` macro or `->/do` (see next point).
 This clearly identifies the topic to be threaded.
 ```clojure
    ;; good
@@ -41,8 +41,10 @@ experience, the threading macros are used to either dig into a deep data
 structure massaging the topic the deeper it goes or are used to build a
 result by describing a pipeline of operations. The main difference between
 digging and building is that the type and shape of the threaded topic is
-changing or is constant respectively. We use synthread macros for building as
-a general rule.
+changing or is constant respectively. We use synthread macros for
+building as a general rule. The `->/do` macro will behave like `->`
+but will also check that the topic is maintained through a threaded
+block.
 ```clojure
    ;; good
    (-> {:a 1 :b 2}

@@ -1,4 +1,4 @@
-(defproject lonocloud/synthread "1.0.2"
+(defproject lonocloud/synthread "1.0.3-SNAPSHOT"
   :description "Syntax Threading library"
   :url "http://github.com/lonocloud/synthread/"
   :license {:name "Eclipse Public License - v 1.0"
