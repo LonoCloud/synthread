@@ -6,7 +6,7 @@
       (.refer *ns* sym target)
       (.importClass *ns* sym target)))
   (doseq [[sym ns] (ns-aliases from-ns)]
-    (alias sym ns)))
+    (alias sym (symbol (str ns)))))
 
 (defn split-def [def-macro [def-name & def-tail]]
   (let [tmp (gensym (str def-name "-"))]
