@@ -1,9 +1,26 @@
 (ns lonocloud.synthread
-  (:use [lonocloud.synthread.isolate :only [isolate-ns]]))
+  (:use [lonocloud.synthread.isolate :only [isolate-ns]]
+        [lonocloud.synthread.impl :only [] :as impl]))
 (isolate-ns :as ->)
 
 ;; Section 1: macros that do not update the topic.
 ;;            Generally control flow macros.
+
+(defmacro do
+  "Thread x through body. Semantically identical to -> with the
+  additional constraint that x is marked and checked after each form
+  in body to confirm that the mark remains."
+  [x & body]
+  (let [val (rand-int Integer/MAX_VALUE)
+        do-asserts (gensym "do-asserts-")]
+    `(-> ~x
+       (->/let [~do-asserts (impl/iobj? ~val)]
+         (impl/mark ~val)
+         ~@(mapcat (fn [form form-num]
+                     [form `(impl/assert-mark ~val ~do-asserts
+                                              ~*file* ~form-num ~(-> form meta :line) ~(-> &form meta :line))])
+                   body
+                   (range))))))
 
 ;; (oh yeah. we're messing with if :-)
 (defmacro if

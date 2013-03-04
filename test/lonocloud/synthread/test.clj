@@ -83,6 +83,18 @@
                 inc)
       (->is = [2 1 2 3])))
 
+(deftest test-do-no-arg-form
+  (is (thrown? Exception
+               (->/do [1 2 3]
+                 str
+                 (->is = [])))))
+
+(deftest test-do-non-iobj
+  (->/do 10
+         (+ 10)
+         inc
+         (->is = 21)))
+
 (deftest test-second
   (-> (range 4)
       (->/second (->is = 1)
