@@ -29,33 +29,58 @@
       data-map)))
 
 (defn ^:private map-entry [pair]
-  (if (instance? java.util.Map$Entry pair)
+  (if (vector? pair)
     pair
     (let [[k v] pair]
       (clojure.lang.MapEntry. k v))))
 
+(defmacro compile-if
+  "Expands to then-form for versions of clojure at or above
+  version-selector, otherwise expands to else-form"
+  [compile-time-test then-form else-form]
+  (let [test-result (try (eval compile-time-test) (catch Exception e false))]
+    ;;(prn :compile-if test-result compile-time-test)
+    (if test-result
+      then-form
+      else-form)))
+
+
+
+(def into-does-metadata?
+  (:ok (meta (into ^:ok [] [1]))))
+
+(compile-if clojure.lang.IRecord
+  (import '(clojure.lang IRecord))
+  (do
+    (deftype Nothing [])
+    (def IRecord Nothing)))
+
 (defn replace-content
   [o n]
-  (condp instance? o
+  (if (instance? (type o) n)
+    (if (iobj? o)
+      (with-meta n (meta o))
+      n)
+    (condp instance? o
       clojure.lang.IMapEntry             (map-entry n)
-      clojure.lang.IRecord               (with-meta (map->record (.getName (class o)) (into {} n)) (meta o))
+      IRecord                            (with-meta (map->record (.getName (class o))
+                                                                 (if (map? n) n
+                                                                     (into {} (map map-entry n))))
+                                           (meta o))
       clojure.lang.IPersistentList       (with-meta (apply list n) (meta o))
-      clojure.lang.IPersistentMap        (into (empty o) (map map-entry n))
+      clojure.lang.IPersistentMap        (compile-if into-does-metadata?
+                                                     (into (empty o) (map map-entry n))
+                                                     (with-meta (into
+                                                                 (if (ifn? o)
+                                                                   (empty o)  ;; maps that do empty also do ifn
+                                                                   {}) ;; defrecord in clojure 1.2?
+                                                                 (map map-entry n)) (meta o)))
       clojure.lang.ISeq                  (with-meta (doall n) (meta o))
-      clojure.lang.IPersistentCollection (into (empty o) n)
+      clojure.lang.IPersistentCollection (compile-if into-does-metadata?
+                                                     (into (empty o) n)
+                                                     (with-meta (into (empty o) n) (meta o)))
       clojure.lang.IObj                  (with-meta n (meta o))
-      Object                             n))
-
-(defn replace-content-pre-1-5
-  [o n]
-  (condp instance? o
-      clojure.lang.IMapEntry             (map-entry n)
-      clojure.lang.IPersistentList       (with-meta (apply list n) (meta o))
-      clojure.lang.IPersistentMap        (with-meta (into (empty o) (map map-entry n)) (meta o))
-      clojure.lang.ISeq                  (with-meta (doall n) (meta o))
-      clojure.lang.IPersistentCollection (with-meta (into (empty o) n) (meta o))
-      clojure.lang.IObj                  (with-meta n (meta o))
-      Object                             n))
+      Object                             n)))
 
 ;; examples
 (defn ^:private map-or-identity [f x]

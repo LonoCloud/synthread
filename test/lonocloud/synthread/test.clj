@@ -1,5 +1,6 @@
 (ns lonocloud.synthread.test
-  (:require [lonocloud.synthread :as ->])
+  (:require [lonocloud.synthread :as ->]
+            [lonocloud.synthread.impl :as impl])
   (:use [clojure.test :only [deftest is]]))
 
 (defmacro ->is [x binop v]
@@ -221,7 +222,9 @@
   (->/do (R. 1 2 3)
     (->/each
      (->/val inc))
-    (->is = (R. 2 3 4))))
+    (->is = (impl/compile-if clojure.lang.IRecord
+                             (R. 2 3 4)
+                             {:a 2 :b 3 :c 4}))))
 
 (deftest test-each-as
   (-> (range 5)
