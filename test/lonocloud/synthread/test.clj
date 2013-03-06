@@ -8,6 +8,7 @@
        (is (~binop ~xx ~v))
        ~xx)))
 
+;; Testing flow control
 (deftest test-if
   (-> 0
       (->/if true inc dec)
@@ -76,13 +77,7 @@
               (+ n))
       (->is = 10)))
 
-(deftest test-first
-  (-> (range 4)
-      (->/first (->is = 0)
-                inc
-                inc)
-      (->is = [2 1 2 3])))
-
+;; Testing updating macros
 (deftest test-do-no-arg-form
   (is (thrown? Exception
                (->/do [1 2 3]
@@ -91,36 +86,51 @@
 
 (deftest test-do-non-iobj
   (->/do 10
-         (+ 10)
-         inc
-         (->is = 21)))
+    (+ 10)
+    inc
+    (->is = 21)))
+
+(deftest test-first
+  (->/do (range 4)
+    (->/first
+      (->is = 0)
+      inc
+      inc)
+    (->is = [2 1 2 3]))
+  (->/do {:a 1, :b 2, :c 3}
+    (->/first reverse)
+    (->is = {1 :a, :b 2, :c 3})))
 
 (deftest test-second
-  (-> (range 4)
-      (->/second (->is = 1)
-                 inc
-                 inc)
-      (->is = [0 3 2 3])))
+  (->/do (range 4)
+    (->/second
+      (->is = 1)
+      inc
+      inc)
+    (->is = [0 3 2 3])))
 
 (deftest test-nth
-  (-> (range 4)
-      (->/nth 2 (->is = 2)
-                 inc
-                 inc)
-      (->is = [0 1 4 3])))
+  (->/do (range 4)
+    (->/nth 2
+      (->is = 2)
+      inc
+      inc)
+    (->is = [0 1 4 3])))
 
 (deftest test-last
-  (-> (range 4)
-      (->/last (->is = 3)
-                 inc
-                 inc)
-      (->is = [0 1 2 5])))
+  (->/do (range 4)
+    (->/last
+      (->is = 3)
+      inc
+      inc)
+    (->is = [0 1 2 5])))
 
 (deftest test-rest
-  (-> (range 4)
-      (->/rest (->is = [1 2 3])
-                 rest)
-      (->is = [0 2 3])))
+  (->/do (range 4)
+    (->/rest
+      (->is = [1 2 3])
+      rest)
+    (->is = [0 2 3])))
 
 (deftest test-assoc
   (->/do {:a 1 :b 2}
@@ -181,6 +191,8 @@
                 :ignored)
       (->is = 10)))
 
+(defrecord R [a b c])
+
 (deftest test-each
   (-> (range 5)
     (->/each (* 2))
@@ -197,14 +209,19 @@
     (->is = [0 2 4 6 8]))
 
   (->/do {1 2, 3 4, 5 6}
-    (->/each reverse vec)
+    (->/each reverse)
     (->is = {2 1, 4 3, 6 5}))
 
   (->/do {1 2, 3 4, 5 6}
     (->/each
      (->/assoc 0 (* 10)
                1 (+ 10)))
-    (->is = {10 12, 30 14, 50 16})))
+    (->is = {10 12, 30 14, 50 16}))
+
+  (->/do (R. 1 2 3)
+    (->/each
+     (->/val inc))
+    (->is = (R. 2 3 4))))
 
 (deftest test-each-as
   (-> (range 5)

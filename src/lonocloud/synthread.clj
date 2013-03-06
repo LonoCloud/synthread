@@ -153,40 +153,42 @@
   (->/first [1 2 3] inc -) ;; returns [-2 2 3]"
   [x & body]
   `(let [x# ~x]
-     (cons (-> (first x#) ~@body)
-           (rest x#))))
+     (impl/replace-content x# (cons (-> (first x#) ~@body)
+                                    (rest x#)))))
 
 (defmacro second
   "Thread the second element of x through body.
   (->/second [1 2 3] inc -) ;; returns [1 -3 3]"
   [x & body]
   `(let [x# ~x]
-     (cons (first x#)
-           (cons (-> (second x#) ~@body)
-                 (drop 2 x#)))))
+     (impl/replace-content x# (cons (first x#)
+                                    (cons (-> (second x#) ~@body)
+                                          (drop 2 x#))))))
 
 (defmacro nth
   "EXPERIMENTAL Thread the nth element of x through body.
   (->/nth [1 2 3] 1 inc -) ;; returns [1 -3 3]"
   [x n & body]
-  `(let [x# ~x]
-     (concat (take ~n x#)
-             (cons (-> (nth x# ~n) ~@body)
-                   (drop (inc ~n) x#)))))
+  `(let [x# ~x
+         n# ~n]
+     (impl/replace-content x# (concat (take n# x#)
+                                      (cons (-> (nth x# n#) ~@body)
+                                            (drop (inc n#) x#))))))
 
 (defmacro last
   "EXPERIMENTAL Thread the last element of x through body.
   (->/last [1 2 3] inc -) ;; returns [1 2 -4]"
   [x & body]
   `(let [x# ~x]
-     (concat (drop-last 1 x#)
-             [(-> (last x#) ~@body)])))
+     (impl/replace-content x# (concat (drop-last 1 x#)
+                                      [(-> (last x#) ~@body)]))))
 
 (defmacro rest
   "EXPERIMENTAL Thread the rest of items in x through body."
   [x & body]
-  `(let [x# ~x] (cons (first x#)
-                      (-> (rest x#) ~@body))))
+  `(let [x# ~x]
+     (impl/replace-content x# (cons (first x#)
+                                    (-> (rest x#) ~@body)))))
 
 (defmacro assoc
   "Thread the value at each key through the pair form."
@@ -210,11 +212,8 @@
 (defmacro each
   "EXPERIMENTAL Thread each item in x through body."
   [x & body]
-  `(let [x# ~x
-         m# (meta x#)]
-     (with-meta
-       (clojure.walk/walk #(-> % ~@body) identity ~x)
-       m#)))
+  `(let [x# ~x]
+     (impl/replace-content x# (map #(-> % ~@body) x#))))
 
 (defmacro each-as
   "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
