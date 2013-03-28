@@ -77,7 +77,7 @@
                                                    (into (empty o) n)
                                                    (with-meta (into (empty o) n) (meta o)))
     clojure.lang.IObj                  (with-meta n (meta o))
-    Object                             n))
+    n))
 
 ;; examples
 (defn ^:private map-or-identity [f x]

@@ -224,7 +224,10 @@
      (->/val inc))
     (->is = (impl/compile-if clojure.lang.IRecord
                              (R. 2 3 4)
-                             {:a 2 :b 3 :c 4}))))
+                             {:a 2 :b 3 :c 4})))
+  (-> nil
+    (->/each inc)
+    (->is = ())))
 
 (deftest test-each-as
   (-> (range 5)
