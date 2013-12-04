@@ -77,7 +77,7 @@ Standard destructuring is supported by `->/as`:
 ```clojure
    (-> {:a 1 :b 2}
      (->/assoc :a inc)
-     (->/as {:keys [b]}                       ;; descructure topic
+     (->/as {:keys [b]}                       ;; destructure topic
        (->/when (> b 10)
          (->/assoc :large-b true))))
 ```
