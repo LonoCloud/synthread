@@ -11,9 +11,10 @@
   additional constraint that x is marked and checked after each form
   in body to confirm that the mark remains."
   [x & body]
-  (let [val (rand-int Integer/MAX_VALUE)
+  (let [val (gensym "tag-")
         do-asserts (gensym "do-asserts-")]
     `(let [x# ~x
+           ~val (impl/new-mark x#)
            ~do-asserts (impl/iobj? x#)]
        (-> x#
          (impl/mark ~val)

@@ -91,6 +91,14 @@
     inc
     (->is = 21)))
 
+(deftest test-do-nested
+  (->/do [1 2 3]
+    (conj 4)
+    (->/do
+      (conj 5))
+    (conj 6)
+    (->is = [1 2 3 4 5 6])))
+
 (deftest test-first
   (->/do (range 4)
     (->/first

@@ -3,6 +3,9 @@
 (defn iobj? [x]
   (instance? clojure.lang.IObj x))
 
+(defn new-mark [x]
+  (or (-> x meta ::mark) (Object.)))
+
 (defn assert-mark [x val do-asserts file form-num line do-line]
   (when (and do-asserts (not= val (-> x meta ::mark)))
     (let [msg (str "Threaded topic was lost on form " (inc form-num)
@@ -16,7 +19,7 @@
 
 (defn mark [x val]
   (if (iobj? x)
-    (with-meta x {::mark val})
+    (vary-meta x assoc ::mark val)
     x))
 
 (defn ^:private map->record [^String typename, data-map]
