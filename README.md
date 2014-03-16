@@ -158,7 +158,7 @@ we were aware of during the design of SynThread include:
 - Clojure 1.5: `cond->`, `as->`, `when->`
 - [Pallet thread-expr](https://github.com/pallet/thread-expr): `arg->`, `for->`, `when->`, `let->`, etc.
 - [Sierra's Syntactic Pipelines](http://stuartsierra.com/2012/09/12/when-to-write-a-macro): `defpipe`
-- [Prismatic plumbing](https://github.com/Prismatic/plumbing/blob/master/src/plumbing/core.clj#L210): `fn->`
+- [Prismatic plumbing](https://github.com/Prismatic/plumbing/blob/master/src/plumbing/core.clj#L280): `fn->`
 - [Levy's swiss-arrows](https://github.com/rplevy/swiss-arrows): `-<>`, `-?<>`, `-<><:p`, etc.
 - [`core.incubator`](https://github.com/clojure/core.incubator): `-?>`, `-?>>`, `.?.`, etc.
 
