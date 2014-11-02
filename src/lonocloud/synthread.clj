@@ -3,6 +3,26 @@
         [lonocloud.synthread.impl :only [] :as impl]))
 (isolate-ns :as ->)
 
+;; Section 0: special syntax support for updating and getting from a
+;; sub-path.
+(defn- expand-by-form
+  [[label expr :as binding]]
+  (if (and (list? expr)
+           (= 'by (first expr)))
+    (let [[_ path updater & [getter]] expr
+          getter (if (nil? getter) `identity getter)]
+      `[path# [~path]
+        ~'<> (update-in ~'<> path# ~updater)
+        ~label (-> ~'<> (get-in path#) ~getter)])
+    binding))
+
+(defn- expand-by-forms
+  "Look for special 'by' forms in binding pairs to expand them into multiple binding pairs"
+  [bindings]
+  (->> bindings
+       (partition 2)
+       (mapcat expand-by-form)))
+
 ;; Section 1: macros that do not update the topic.
 ;;            Generally control flow macros.
 
@@ -35,20 +55,6 @@
        (-> x# ~then)
        (-> x# ~else))))
 
-(defmacro if-let
-  "Thread x through then or else depending on the value of pred. If
-  pred is true, bind local to pred.
-  (-> {}
-    (->/if-let [x :bar]
-      (assoc :foo x)
-      (assoc :was-bar false)))
-  ;; returns {:foo :bar}"
-  [x [local pred] then else]
-  `(let [x# ~x]
-     (if-let [~local ~pred]
-       (-> x# ~then)
-       (-> x# ~else))))
-
 (defmacro when
   "If pred is true, thread x through body, otherwise return x unchanged.
   (-> 5 (->/when should-inc? inc))"
@@ -66,16 +72,6 @@
      (if ~pred
        x#
        (-> x# ~@body))))
-
-(defmacro when-let
-  "If bound values are true in bindings, thread x through the body,
-  otherwise return x unchanged.
-  (-> 5 (->/when-let [amount (:amount foo)] (+ amount)))"
-  [x bindings & forms]
-  `(let [x# ~x]
-     (if-let ~bindings
-       (-> x# ~@forms)
-       x#)))
 
 (defmacro cond
   "EXPERIMENTAL Thread x through forms in each clause. Return x if no test matches.
@@ -101,16 +97,42 @@
   "Thread x through body (with bindings available as usual).
   (->/let 4 [x 3] (+ x) (- x)) ;; returns 4"
   [x bindings & body]
-  `(let [~@bindings
-         x# ~x]
-     (-> x# ~@body)))
+  `(let [~'<> ~x
+         ~@(expand-by-forms bindings)]
+     (-> ~'<> ~@body)))
+
+(defmacro if-let
+  "Thread x through then or else depending on the value of pred. If
+  pred is true, bind local to pred.
+  (-> {}
+    (->/if-let [x :bar]
+      (assoc :foo x)
+      (assoc :was-bar false)))
+  ;; returns {:foo :bar}"
+  [x [local pred :as binding] then else]
+  `(let [~'<> ~x
+         ~@(expand-by-forms binding)]
+     (if ~local
+       (-> ~'<> ~then)
+       (-> ~'<> ~else))))
+
+(defmacro when-let
+  "If bound values are true in bindings, thread x through the body,
+  otherwise return x unchanged.
+  (-> 5 (->/when-let [amount (:amount foo)] (+ amount)))"
+  [x [local pred :as binding] & forms]
+  `(let [~'<> ~x
+         ~@(expand-by-forms binding)]
+     (if ~local
+       (-> ~'<> ~@forms)
+       ~'<>)))
 
 (defmacro fn
   "Thread x into body of fn. (inspired by Prismatic's fn->).
   (let [add-n (->/fn [n] (+ n))]
     (-> 1 (add-n 2))) ;; returns 3"
   [args & body]
-  `(fn [x# ~@args] (-> x# ~@body)))
+  `(fn [~'<> ~@args] (-> ~'<> ~@body)))
 
 ;; Section 2: Macros that access or update the topic.
 
