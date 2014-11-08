@@ -12,7 +12,7 @@
     (let [[_ path updater & [getter]] expr
           getter (if (nil? getter) `identity getter)]
       `[path# [~path]
-        ~'<> (update-in ~'<> path# ~updater)
+        ~'<> (update-in ~'<> path# #(-> % ~updater))
         ~label (-> ~'<> (get-in path#) ~getter)])
     binding))
 
