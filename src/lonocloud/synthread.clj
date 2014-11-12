@@ -154,17 +154,24 @@
    EXPERIMENTALLY supports arbitrary threading form in place of binding form."
   [x binding & body]
   (if (seq? binding)
-    `(let [x# ~x
-           ~(last binding) (-> x# ~(drop-last binding))]
-       (-> x# ~@body))
-    `(let [x# ~x
-           ~binding x#]
-       (-> x# ~@body))))
+    `(let [~'<> ~x
+           ~(last binding) (-> ~'<> ~(drop-last binding))]
+       (->/do ~'<> ~@body))
+    `(let [~'<> ~x
+           ~binding ~'<>]
+       (->/do ~'<> ~@body))))
 
 (defmacro aside
   "Bind value of x, evaluate unthreaded body and return x."
   [x binding & body]
   `(doto ~x (->/as ~binding (do ~@body))))
+
+(defmacro side
+  "Evaluate unthreaded body and return unchanged x."
+  [x & body]
+  `(let [~'<> ~x]
+     ~@body
+     ~'<>))
 
 (defmacro first
   "Thread the first element of x through body.

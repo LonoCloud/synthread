@@ -188,6 +188,11 @@
                 :ignored)
       (->is = 10)))
 
+(deftest test-side
+  (-> 10
+      (->/side (inc <>))
+      (->is = 10)))
+
 (defrecord R [a b c])
 
 (deftest test-each
