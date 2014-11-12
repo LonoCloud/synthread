@@ -28,21 +28,17 @@
 
 (defmacro do
   "Thread x through body. Semantically identical to -> with the
-  additional constraint that x is marked and checked after each form
-  in body to confirm that the mark remains."
+  extra feature that the symbol <> is bound to the new value of x
+  between each form.
+
+  Note that the old marking constraint has been removed as it was
+  unduly restrictive."
   [x & body]
-  (let [val (gensym "tag-")
-        do-asserts (gensym "do-asserts-")]
-    `(let [x# ~x
-           ~val (impl/new-mark x#)
-           ~do-asserts (impl/iobj? x#)]
-       (-> x#
-         (impl/mark ~val)
-         ~@(mapcat (fn [form form-num]
-                     [form `(impl/assert-mark ~val ~do-asserts
-                                              ~*file* ~form-num ~(-> form meta :line) ~(-> &form meta :line))])
-                   body
-                   (range))))))
+  (if (empty? body)
+    x
+    `(let [~'<> ~x]
+       (->/do (-> ~'<> ~(first body))
+              ~@(rest body)))))
 
 ;; (oh yeah. we're messing with if :-)
 (defmacro if
@@ -50,47 +46,47 @@
   the else form.
   (-> 5 (->/if should-inc? inc dec))"
   [x pred then else]
-  `(let [x# ~x]
+  `(let [~'<> ~x]
      (if ~pred
-       (-> x# ~then)
-       (-> x# ~else))))
+       (->/do ~'<> ~then)
+       (->/do ~'<> ~else))))
 
 (defmacro when
   "If pred is true, thread x through body, otherwise return x unchanged.
   (-> 5 (->/when should-inc? inc))"
   [x pred & body]
-  `(let [x# ~x]
+  `(let [~'<> ~x]
      (if ~pred
-       (-> x# ~@body)
-       x#)))
+       (->/do ~'<> ~@body)
+       ~'<>)))
 
 (defmacro when-not
   "If pred is false, thread x through body, otherwise return x unchanged.
   (-> 5 (->/when should-inc? inc))"
   [x pred & body]
-  `(let [x# ~x]
+  `(let [~'<> ~x]
      (if ~pred
-       x#
-       (-> x# ~@body))))
+       ~'<>
+       (->/do ~'<> ~@body))))
 
 (defmacro cond
   "EXPERIMENTAL Thread x through forms in each clause. Return x if no test matches.
   (->/cond [1 2] true (conj 3) false pop)"
   [x & test-form-pairs]
-  (let [xx (gensym)]
-    `(let [~xx ~x]
-       (cond ~@(mapcat (fn [[test form]] `[~test (-> ~xx ~form)])
-                       (partition 2 test-form-pairs))
-             :else ~xx))))
+  `(let [~'<> ~x]
+     (cond ~@(mapcat (fn [[test form]] `[~test (->/do ~'<> ~form)])
+                     (partition 2 test-form-pairs))
+           :else ~'<>)))
 
 (defmacro for
   "Thread x through each iteration of body. Uses standard looping
   binding syntax for iterating.
   (->/for 4 [x [1 2 3]] (+ x)) ;; returns 10"
   [x seq-exprs & body]
-  `(let [box# (clojure.lang.Box. ~x)]
+  `(let [box# (clojure.lang.Box. ~x)
+         ~'<> (.val box#)]
      (doseq ~seq-exprs
-       (set! (.val box#) (-> (.val box#) ~@body)))
+       (set! (.val box#) (->/do (.val box#) ~@body)))
      (.val box#)))
 
 (defmacro let
@@ -99,7 +95,7 @@
   [x bindings & body]
   `(let [~'<> ~x
          ~@(expand-by-forms bindings)]
-     (-> ~'<> ~@body)))
+     (->/do ~'<> ~@body)))
 
 (defmacro if-let
   "Thread x through then or else depending on the value of pred. If
@@ -110,11 +106,10 @@
       (assoc :was-bar false)))
   ;; returns {:foo :bar}"
   [x [local pred :as binding] then else]
-  `(let [~'<> ~x
-         ~@(expand-by-forms binding)]
-     (if ~local
-       (-> ~'<> ~then)
-       (-> ~'<> ~else))))
+  `(let [~'<> ~x]
+     (if-let [~@(expand-by-forms binding)]
+       (->/do ~'<> ~then)
+       (->/do ~'<> ~else))))
 
 (defmacro when-let
   "If bound values are true in bindings, thread x through the body,
@@ -124,7 +119,7 @@
   `(let [~'<> ~x
          ~@(expand-by-forms binding)]
      (if ~local
-       (-> ~'<> ~@forms)
+       (->/do ~'<> ~@forms)
        ~'<>)))
 
 (defmacro fn
@@ -132,7 +127,7 @@
   (let [add-n (->/fn [n] (+ n))]
     (-> 1 (add-n 2))) ;; returns 3"
   [args & body]
-  `(fn [~'<> ~@args] (-> ~'<> ~@body)))
+  `(fn [~'<> ~@args] (->/do ~'<> ~@body)))
 
 ;; Section 2: Macros that access or update the topic.
 
@@ -176,7 +171,7 @@
   (->/first [1 2 3] inc -) ;; returns [-2 2 3]"
   [x & body]
   `(let [x# ~x]
-     (impl/replace-content x# (cons (-> (first x#) ~@body)
+     (impl/replace-content x# (cons (->/do (first x#) ~@body)
                                     (rest x#)))))
 
 (defmacro second
@@ -185,7 +180,7 @@
   [x & body]
   `(let [x# ~x]
      (impl/replace-content x# (cons (first x#)
-                                    (cons (-> (second x#) ~@body)
+                                    (cons (->/do (second x#) ~@body)
                                           (drop 2 x#))))))
 
 (defmacro nth
@@ -195,7 +190,7 @@
   `(let [x# ~x
          n# ~n]
      (impl/replace-content x# (concat (take n# x#)
-                                      (cons (-> (nth x# n#) ~@body)
+                                      (cons (->/do (nth x# n#) ~@body)
                                             (drop (inc n#) x#))))))
 
 (defmacro last
@@ -204,14 +199,14 @@
   [x & body]
   `(let [x# ~x]
      (impl/replace-content x# (concat (drop-last 1 x#)
-                                      [(-> (last x#) ~@body)]))))
+                                      [(->/do (last x#) ~@body)]))))
 
 (defmacro rest
   "EXPERIMENTAL Thread the rest of items in x through body."
   [x & body]
   `(let [x# ~x]
      (impl/replace-content x# (cons (first x#)
-                                    (-> (rest x#) ~@body)))))
+                                    (->/do (rest x#) ~@body)))))
 
 (defmacro assoc
   "Thread the value at each key through the pair form."
@@ -222,21 +217,21 @@
          ~@(->> key-form-pairs
                 (partition 2)
                 (mapcat (fn [[key form]]
-                          [key `(-> (get ~xx ~key) ~form)])))))))
+                          [key `(->/do (get ~xx ~key) ~form)])))))))
 
 (defmacro in
   "Thread the portion of x specified by path through body.
   (->/in {:a 1, :b 2} [:a] (+ 2)) ;; = {:a 3, :b 2}"
   [x path & body]
   `(if (empty? ~path)
-     (-> ~x ~@body)
-     (update-in ~x ~path (fn [x#] (-> x# ~@body)))))
+     (->/do ~x ~@body)
+     (update-in ~x ~path (fn [x#] (->/do x# ~@body)))))
 
 (defmacro each
   "EXPERIMENTAL Thread each item in x through body."
   [x & body]
   `(let [x# ~x]
-     (impl/replace-content x# (map #(-> % ~@body) x#))))
+     (impl/replace-content x# (map #(->/do % ~@body) x#))))
 
 (defmacro each-as
   "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
@@ -246,12 +241,12 @@
 (defmacro key
   "Thread the key in x through body (x must be a MapEntry)."
   [x & body]
-  `(let [x# ~x] (clojure.lang.MapEntry. (-> (key x#) ~@body) (val x#))))
+  `(let [x# ~x] (clojure.lang.MapEntry. (->/do (key x#) ~@body) (val x#))))
 
 (defmacro val
   "Thread the value in x through body (x must be a MapEntry)."
   [x & body]
-  `(let [x# ~x] (clojure.lang.MapEntry. (key x#) (-> (val x#) ~@body))))
+  `(let [x# ~x] (clojure.lang.MapEntry. (key x#) (->/do (val x#) ~@body))))
 
 ;; Section 3: Additional helper functions.
 

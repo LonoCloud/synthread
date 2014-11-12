@@ -9,6 +9,15 @@
        (is (~binop ~xx ~v))
        ~xx)))
 
+(deftest test-do
+  (is (= (-> 0 inc (+ 2) (- 1 1))
+         (->/do 0 inc (+ 2) (- 1 1)))))
+
+(deftest test-<>
+  (->/do {:a 1 :b 2}
+         (assoc :a (:b <>))
+         (->is = {:a 2 :b 2})))
+
 ;; Testing flow control
 (deftest test-if
   (-> 0
@@ -77,27 +86,6 @@
                :while (< n 5)]
               (+ n))
       (->is = 10)))
-
-;; Testing updating macros
-(deftest test-do-no-arg-form
-  (is (thrown? Exception
-               (->/do [1 2 3]
-                 str
-                 (->is = "[1 2 3]")))))
-
-(deftest test-do-non-iobj
-  (->/do 10
-    (+ 10)
-    inc
-    (->is = 21)))
-
-(deftest test-do-nested
-  (->/do [1 2 3]
-    (conj 4)
-    (->/do
-      (conj 5))
-    (conj 6)
-    (->is = [1 2 3 4 5 6])))
 
 (deftest test-first
   (->/do (range 4)
