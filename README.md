@@ -71,7 +71,7 @@ the first:
      (->/assoc :a inc)
      (->/as topic                             ;; label topic
        (->/when (> (:b topic) 10)
-         (->/assoc :large-b true))))
+         (assoc :large-b true))))
 ```
 Standard destructuring is supported by `->/as`:
 ```clojure
@@ -79,7 +79,7 @@ Standard destructuring is supported by `->/as`:
      (->/assoc :a inc)
      (->/as {:keys [b]}                       ;; destructure topic
        (->/when (> b 10)
-         (->/assoc :large-b true))))
+         (assoc :large-b true))))
 ```
 Additionally, a special destructuring form is supported allowing the
 use of functions. Passing a threaded form will implicity insert the
@@ -89,7 +89,7 @@ example:
    (-> {:a 1 :b 2}
      (->/as (-> vals (->/apply max) max-val)  ;; use functions on topic
        (->/when (> max-val 10)
-         (->/assoc :large-val true))))
+         (assoc :large-val true))))
 ```
 
 5. Clojure's `do` and `doto` macros are useful in these threading
