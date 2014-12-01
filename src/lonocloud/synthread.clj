@@ -125,7 +125,7 @@
   (->/let 4 [x 3] (+ x) (- x)) ;; returns 4"
   [x bindings & body]
   `(let [~'<> ~x
-         ~@(expand-by-forms bindings)]
+         ~@(expand-bind-macros bindings)]
      (->/do ~'<> ~@body)))
 
 (defmacro if-let
@@ -138,7 +138,7 @@
   ;; returns {:foo :bar}"
   [x [local pred :as binding] then else]
   `(let [~'<> ~x]
-     (if-let [~@(expand-by-forms binding)]
+     (if-let [~@(expand-bind-macros binding)]
        (->/do ~'<> ~then)
        (->/do ~'<> ~else))))
 
@@ -148,7 +148,7 @@
   (-> 5 (->/when-let [amount (:amount foo)] (+ amount)))"
   [x [local pred :as binding] & forms]
   `(let [~'<> ~x
-         ~@(expand-by-forms binding)]
+         ~@(expand-bind-macros binding)]
      (if ~local
        (->/do ~'<> ~@forms)
        ~'<>)))
