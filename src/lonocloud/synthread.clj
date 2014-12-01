@@ -5,15 +5,46 @@
 
 ;; Section 0: special syntax support for updating and getting from a
 ;; sub-path.
+
+(defmacro ^:bind-macro upget
+  "Expand into a threaded update-form followed by a threaded get-form both of
+  which act on the value found in the current topic (bound to <>) under
+  context. The resulting updated context value is then added back into <> and
+  the result of get-form is bound to the bind-label (see below).
+
+  This is a special binding macro that may only be expanded within a bind
+  context and, when expanded in a bind context, the assoicated bind-label is
+  passed into the macro by the enclosing macro."
+  [context update-form get-form]
+  (if-let [label (:bind-label (meta &form))]
+    `[a# (get ~'<> ~context)
+      a# (-> a# ~update-form)
+      ~'<> (assoc ~'<> ~context a#)
+      ~label (-> a# ~get-form)]
+    (throw (Exception. "Unable to expand upget in non-binding block context."))))
+
+(defmacro ^:bind-macro getup
+  "Expand into a threaded get-form followed by a threaded update-form both of
+  which act on the value found in the current topic (bound to <>) under
+  context. The resulting updated context value is then added back into <> and
+  the result of get-form is bound to the bind-label (see below).
+
+  This is a special binding macro that may only be expanded within a bind
+  context and, when expanded in a bind context, the assoicated bind-label is
+  passed into the macro by the enclosing macro."
+  [context get-form update-form]
+  (if-let [label (:bind-label (meta &form))]
+    `[a# (get ~'<> ~context)
+      ~label (-> a# ~get-form)
+      a# (-> a# ~update-form)
+      ~'<> (assoc ~'<> ~context a#)]
+    (throw (Exception. "Unable to expand getup in non-binding block context."))))
+
 (defn- expand-by-form
   [[label expr :as binding]]
   (if (and (list? expr)
-           (= 'by (first expr)))
-    (let [[_ path updater & [getter]] expr
-          getter (if (nil? getter) `identity getter)]
-      `[path# [~path]
-        ~'<> (update-in ~'<> path# #(-> % ~updater))
-        ~label (-> ~'<> (get-in path#) ~getter)])
+           (:bind-macro (meta (resolve (first expr)))))
+    (macroexpand (vary-meta expr assoc :bind-label label))
     binding))
 
 (defn- expand-by-forms
