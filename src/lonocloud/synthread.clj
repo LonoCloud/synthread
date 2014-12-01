@@ -40,19 +40,19 @@
       ~'<> (assoc ~'<> ~context a#)]
     (throw (Exception. "Unable to expand getup in non-binding block context."))))
 
-(defn- expand-by-form
+(defn- expand-bind-macro
   [[label expr :as binding]]
   (if (and (list? expr)
            (:bind-macro (meta (resolve (first expr)))))
     (macroexpand (vary-meta expr assoc :bind-label label))
     binding))
 
-(defn- expand-by-forms
+(defn- expand-bind-macros
   "Look for special 'by' forms in binding pairs to expand them into multiple binding pairs"
   [bindings]
   (->> bindings
        (partition 2)
-       (mapcat expand-by-form)))
+       (mapcat expand-bind-macro)))
 
 ;; Section 1: macros that do not update the topic.
 ;;            Generally control flow macros.
