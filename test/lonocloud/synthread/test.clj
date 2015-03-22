@@ -121,6 +121,13 @@
                   reverse)
          (->is = [1 0 2 3])))
 
+(deftest test-drop
+  (->/do (range 4)
+         (->/drop 2
+                  (->is = [2 3])
+                  reverse)
+         (->is = [0 1 3 2])))
+
 (deftest test-last
   (->/do (range 4)
     (->/last
@@ -138,10 +145,10 @@
 
 (deftest test-rest
   (->/do (range 4)
-    (->/rest
-      (->is = [1 2 3])
-      rest)
-    (->is = [0 2 3])))
+         (->/rest
+          (->is = [1 2 3])
+          rest)
+         (->is = [0 2 3])))
 
 (deftest test-update
   (->/do {:a 1 :b 2}
