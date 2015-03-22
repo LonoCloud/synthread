@@ -122,6 +122,13 @@
       inc)
     (->is = [0 1 2 5])))
 
+(deftest test-butlast
+  (->/do (range 4)
+    (->/butlast
+      (->is = [0 1 2])
+      rest)
+    (->is = [1 2 3])))
+
 (deftest test-rest
   (->/do (range 4)
     (->/rest

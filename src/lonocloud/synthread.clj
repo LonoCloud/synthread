@@ -239,6 +239,13 @@
      (impl/replace-content x# (concat (drop-last 1 x#)
                                       [(->/do (last x#) ~@body)]))))
 
+(defmacro butlast
+  "EXPERIMENTAL Thread all but the last item in x through body."
+  [x & body]
+  `(let [x# ~x]
+     (impl/replace-content x# (concat (->/do (drop-last 1 x#) ~@body)
+                                      [(last x#)]))))
+
 (defmacro rest
   "EXPERIMENTAL Thread the rest of items in x through body."
   [x & body]
