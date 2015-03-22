@@ -1,6 +1,6 @@
-(defproject lonocloud/synthread "1.1.0-SNAPSHOT"
+(defproject synthread "1.2.0"
   :description "Syntax Threading library"
-  :url "http://github.com/lonocloud/synthread/"
+  :url "http://github.com/myguidingstar/synthread/"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo
