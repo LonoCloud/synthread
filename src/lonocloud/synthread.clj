@@ -231,6 +231,15 @@
                                       (cons (->/do (nth x# n#) ~@body)
                                             (drop (inc n#) x#))))))
 
+(defmacro take
+  "EXPERIMENTAL Thread the first n elements of x through body.
+  (->/take [1 2 3] 2 reverse) ;; returns [2 1 3]"
+  [x n & body]
+  `(let [x# ~x
+         n# ~n]
+     (impl/replace-content x# (concat (->/do (take n# x#) ~@body)
+                                      (drop n# x#)))))
+
 (defmacro last
   "EXPERIMENTAL Thread the last element of x through body.
   (->/last [1 2 3] inc -) ;; returns [1 2 -4]"

@@ -114,6 +114,13 @@
       inc)
     (->is = [0 1 4 3])))
 
+(deftest test-take
+  (->/do (range 4)
+         (->/take 2
+                  (->is = [0 1])
+                  reverse)
+         (->is = [1 0 2 3])))
+
 (deftest test-last
   (->/do (range 4)
     (->/last
