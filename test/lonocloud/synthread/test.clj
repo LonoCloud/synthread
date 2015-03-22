@@ -136,9 +136,9 @@
       rest)
     (->is = [0 2 3])))
 
-(deftest test-assoc
+(deftest test-update
   (->/do {:a 1 :b 2}
-      (->/assoc
+      (->/update
        :a dec
        :b (* 2))
       (->is = {:a 0 :b 4})))
@@ -185,7 +185,7 @@
 (deftest test-as-with-arrow
   (->/do {:a {:delta 1} :b 2}
       (->/as (-> :a :delta delta)
-             (->/assoc :b (+ delta)))
+             (->/update :b (+ delta)))
       (->is = {:a {:delta 1} :b 3})))
 
 (deftest test-aside
@@ -223,7 +223,7 @@
 
   (->/do {1 2, 3 4, 5 6}
     (->/each
-     (->/assoc 0 (* 10)
+     (->/update 0 (* 10)
                1 (+ 10)))
     (->is = {10 12, 30 14, 50 16}))
 

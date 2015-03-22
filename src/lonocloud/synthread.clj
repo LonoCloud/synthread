@@ -253,21 +253,14 @@
      (impl/replace-content x# (cons (first x#)
                                     (->/do (rest x#) ~@body)))))
 
-(defmacro assoc
+(defmacro update
   "Thread the value at each key through the pair form.
   The form must be a function which accepts the value of the key as its first
   argument, e.g.
 
     => (-> {:a 1}
-         (->/assoc :a inc))
-    {:a 2}
-
-  This macro DOES NOT work like `clojure.core/assoc`. If you just want to set a
-  key to some value, use `clojure.core/assoc`, e.g.
-
-    => (-> {:a 1}
-         (assoc :b 2))
-    {:a 1, :b 2}"
+         (->/update-in :a inc))
+    {:a 2}"
   [x & key-form-pairs]
   (let [xx (gensym)]
     `(let [~xx ~x]
