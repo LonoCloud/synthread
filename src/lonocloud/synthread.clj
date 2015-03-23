@@ -1,7 +1,5 @@
 (ns lonocloud.synthread
-  (:use [lonocloud.synthread.isolate :only [isolate-ns]]
-        [lonocloud.synthread.impl :only [] :as impl]))
-(isolate-ns :as ->)
+  (:require [lonocloud.synthread.impl :as impl]))
 
 ;; Section 0: special syntax support for updating and getting from a
 ;; sub-path.
