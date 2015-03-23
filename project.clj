@@ -1,4 +1,4 @@
-(defproject synthread "1.2.0"
+(defproject synthread "1.3.0"
   :description "Syntax Threading library"
   :url "http://github.com/myguidingstar/synthread/"
   :license {:name "Eclipse Public License - v 1.0"
