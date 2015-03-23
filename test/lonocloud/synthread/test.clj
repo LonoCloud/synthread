@@ -7,6 +7,7 @@
     `(let [~xx ~x]
        (is (~binop ~xx ~v))
        ~xx)))
+  (:require [clojure.test :refer [deftest is]]))
 
 (deftest test-do
   (is (= (-> 0 inc (+ 2) (- 1 1))
