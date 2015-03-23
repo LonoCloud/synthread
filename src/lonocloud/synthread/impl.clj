@@ -3,15 +3,6 @@
 (defn iobj? [x]
   (instance? clojure.lang.IObj x))
 
-(defn ^:private map->record [^String typename, data-map]
-  (let [nameidx (.lastIndexOf typename ".")
-        ns (subs typename 0 nameidx)
-        ctor-name (str "map->" (subs typename (inc nameidx)))
-        ctor (resolve (symbol ns ctor-name))]
-    (if ctor
-      (ctor data-map)
-      data-map)))
-
 (defn ^:private map-entry [pair]
   (if (vector? pair)
     pair
@@ -23,9 +14,8 @@
   (condp instance? o
     (type n)                           (if (iobj? o) (with-meta n (meta o)) n)
     clojure.lang.IMapEntry             (map-entry n)
-    clojure.lang.IRecord               (with-meta (map->record (.getName (class o))
-                                                               (if (map? n) n
-                                                                   (into {} (map map-entry n))))
+    clojure.lang.IRecord               (with-meta (merge o (if (map? n) n
+                                                               (into {} (map map-entry n))))
                                          (meta o))
     clojure.lang.IPersistentList       (with-meta (apply list n) (meta o))
     clojure.lang.IPersistentMap        (into (empty o) (map map-entry n))
