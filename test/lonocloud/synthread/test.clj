@@ -1,7 +1,6 @@
 (ns lonocloud.synthread.test
   (:require [lonocloud.synthread :refer :all]
             [lonocloud.synthread.impl :as impl])
-
   (:require [clojure.test :refer [deftest is]]))
 
 (defmacro ->is
@@ -253,9 +252,7 @@
   (>do (R. 1 2 3)
     (>each
      (>val inc))
-    (->is = (impl/compile-if clojure.lang.IRecord
-                             (R. 2 3 4)
-                             {:a 2 :b 3 :c 4})))
+    (->is = (R. 2 3 4)))
   (-> nil
     (>each inc)
     (->is = ())))
@@ -286,8 +283,3 @@
   (-> 10
       (>apply + [1 2])
       (->is = 13)))
-
-;; Just try this a bunch to make sure isolate.clj isn't doing wrong.
-(deftest test-reloading
-  (dotimes [_ 5]
-    (require '[lonocloud.synthread :as ->] :reload-all)))
