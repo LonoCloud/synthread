@@ -2,12 +2,19 @@
   (:require [lonocloud.synthread :refer :all]
             [lonocloud.synthread.impl :as impl])
 
-(defmacro ->is [x binop v]
-  (let [xx '<topic>]
-    `(let [~xx ~x]
-       (is (~binop ~xx ~v))
-       ~xx)))
   (:require [clojure.test :refer [deftest is]]))
+
+(defmacro ->is
+  ([x op]
+   (let [xx '<topic>]
+     `(let [~xx ~x]
+        (is (~op ~xx))
+        ~xx)))
+  ([x binop v]
+   (let [xx '<topic>]
+     `(let [~xx ~x]
+        (is (~binop ~xx ~v))
+        ~xx))))
 
 (deftest test-do
   (is (= (-> 0 inc (+ 2) (- 1 1))
