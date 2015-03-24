@@ -108,7 +108,8 @@
            :else ~'<>)))
 
 (defn mkbox [x]
-  (clojure.lang.Box. x))
+  #+clj  (clojure.lang.Box. x)
+  #+cljs (cljs.core/Box. x))
 
 (defmacro >for
   "Thread x through each iteration of body. Uses standard looping
