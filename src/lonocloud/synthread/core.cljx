@@ -1,4 +1,4 @@
-(ns lonocloud.synthread
+(ns lonocloud.synthread.core
   (:require [lonocloud.synthread.impl :as impl]))
 
 ;; Section 0: special syntax support for updating and getting from a
@@ -56,7 +56,7 @@
 
 ;; Section 1: macros that do not update the topic.
 ;;            Generally control flow macros.
-
+#+clj
 (defmacro >do
   "Thread x through body. Semantically identical to -> with the
   extra feature that the symbol <> is bound to the new value of x
@@ -71,7 +71,7 @@
        (>do (-> ~'<> ~(first body))
               ~@(rest body)))))
 
-;; (oh yeah. we're messing with if :-)
+#+clj
 (defmacro >if
   "If pred is true, thread x through the then form, otherwise through
   the else form.
@@ -82,6 +82,7 @@
        (>do ~'<> ~then)
        (>do ~'<> ~else))))
 
+#+clj
 (defmacro >when
   "If pred is true, thread x through body, otherwise return x unchanged.
   (-> 5 (>when should-inc? inc))"
@@ -91,6 +92,7 @@
        (>do ~'<> ~@body)
        ~'<>)))
 
+#+clj
 (defmacro >when-not
   "If pred is false, thread x through body, otherwise return x unchanged.
   (-> 5 (>when should-inc? inc))"
@@ -100,6 +102,7 @@
        ~'<>
        (>do ~'<> ~@body))))
 
+#+clj
 (defmacro >cond
   "EXPERIMENTAL Thread x through forms in each clause. Return x if no test matches.
   (>cond [1 2] true (conj 3) false pop)"
@@ -113,6 +116,7 @@
   #+clj  (clojure.lang.Box. x)
   #+cljs (cljs.core/Box. x))
 
+#+clj
 (defmacro >for
   "Thread x through each iteration of body. Uses standard looping
   binding syntax for iterating.
@@ -124,6 +128,7 @@
        (set! (.-val box#) (>do (.-val box#) ~@body)))
      (.-val box#)))
 
+#+clj
 (defmacro >let
   "Thread x through body (with bindings available as usual).
   (>let 4 [x 3] (+ x) (- x)) ;; returns 4"
@@ -132,6 +137,7 @@
          ~@(expand-bind-macros bindings)]
      (>do ~'<> ~@body)))
 
+#+clj
 (defmacro >if-let
   "Thread x through then or else depending on the value of pred. If
   pred is true, bind local to pred.
@@ -146,6 +152,7 @@
        (>do ~'<> ~then)
        (>do ~'<> ~else))))
 
+#+clj
 (defmacro >when-let
   "If bound values are true in bindings, thread x through the body,
   otherwise return x unchanged.
@@ -157,6 +164,7 @@
        (>do ~'<> ~@forms)
        ~'<>)))
 
+#+clj
 (defmacro >fn
   "Thread x into body of fn. (inspired by Prismatic's fn->).
   (let [add-n (>fn [n] (+ n))]
@@ -184,6 +192,7 @@
 ;; 1 1 0 (>as x (do .... ))  ;; mention in style guide
 ;; 1 1 1 (>as x ...)
 
+#+clj
 (defmacro >as
   "Bind value of x and thread x through body.
    EXPERIMENTALLY supports arbitrary threading form in place of binding form."
@@ -196,11 +205,13 @@
            ~binding ~'<>]
        (>do ~'<> ~@body))))
 
+#+clj
 (defmacro >aside
   "Bind value of x, evaluate unthreaded body and return x."
   [x binding & body]
   `(doto ~x (>as ~binding (do ~@body))))
 
+#+clj
 (defmacro >side
   "Evaluate unthreaded body and return unchanged x."
   [x & body]
@@ -208,6 +219,7 @@
      ~@body
      ~'<>))
 
+#+clj
 (defmacro >first
   "Thread the first element of x through body.
   (>first [1 2 3] inc -) ;; returns [-2 2 3]"
@@ -215,7 +227,7 @@
   `(let [x# ~x]
      (impl/replace-content x# (cons (>do (first x#) ~@body)
                                     (rest x#)))))
-
+#+clj
 (defmacro >second
   "Thread the second element of x through body.
   (>second [1 2 3] inc -) ;; returns [1 -3 3]"
@@ -225,6 +237,7 @@
                                     (cons (>do (second x#) ~@body)
                                           (drop 2 x#))))))
 
+#+clj
 (defmacro >nth
   "EXPERIMENTAL Thread the nth element of x through body.
   (>nth [1 2 3] 1 inc -) ;; returns [1 -3 3]"
@@ -235,6 +248,7 @@
                                       (cons (>do (nth x# n#) ~@body)
                                             (drop (inc n#) x#))))))
 
+#+clj
 (defmacro >take
   "EXPERIMENTAL Thread the first n elements of x through body.
   (>take [1 2 3] 2 reverse) ;; returns [2 1 3]"
@@ -244,6 +258,7 @@
      (impl/replace-content x# (concat (>do (take n# x#) ~@body)
                                       (drop n# x#)))))
 
+#+clj
 (defmacro >drop
   "EXPERIMENTAL Thread all but the first n elements of x through body.
   (>drop [1 2 3] 1 reverse) ;; returns [1 3 2]"
@@ -253,6 +268,7 @@
      (impl/replace-content x# (concat (take n# x#)
                                       (>do (drop n# x#) ~@body)))))
 
+#+clj
 (defmacro >last
   "EXPERIMENTAL Thread the last element of x through body.
   (>last [1 2 3] inc -) ;; returns [1 2 -4]"
@@ -261,13 +277,14 @@
      (impl/replace-content x# (concat (drop-last 1 x#)
                                       [(>do (last x#) ~@body)]))))
 
+#+clj
 (defmacro >butlast
   "EXPERIMENTAL Thread all but the last item in x through body."
   [x & body]
   `(let [x# ~x]
      (impl/replace-content x# (concat (>do (drop-last 1 x#) ~@body)
                                       [(last x#)]))))
-
+#+clj
 (defmacro >rest
   "EXPERIMENTAL Thread the rest of items in x through body."
   [x & body]
@@ -275,6 +292,7 @@
      (impl/replace-content x# (cons (first x#)
                                     (>do (rest x#) ~@body)))))
 
+#+clj
 (defmacro >update
   "Thread the value at each key through the pair form.
   The form must be a function which accepts the value of the key as its first
@@ -292,6 +310,7 @@
                 (mapcat (fn [[key form]]
                           [key `(>do (get ~xx ~key) ~form)])))))))
 
+#+clj
 (defmacro >in
   "Thread the portion of x specified by path through body.
   (>in {:a 1, :b 2} [:a] (+ 2)) ;; = {:a 3, :b 2}"
@@ -300,12 +319,14 @@
      (>do ~x ~@body)
      (update-in ~x ~path (fn [x#] (>do x# ~@body)))))
 
+#+clj
 (defmacro >each
   "EXPERIMENTAL Thread each item in x through body."
   [x & body]
   `(let [x# ~x]
      (impl/replace-content x# (map #(>do % ~@body) x#))))
 
+#+clj
 (defmacro >each-as
   "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
   [x binding & body]
