@@ -4,6 +4,7 @@
  :dependencies '[[adzerk/boot-cljs "0.0-3123" :scope "test"]
                  [adzerk/boot-test "1.0.4" :scope "test"]
                  [deraen/boot-cljx "0.2.2"]
+                 [com.cemerick/piggieback "0.1.5"]
                  [adzerk/boot-reload "0.2.6" :scope "test"]
                  [adzerk/bootlaces          "0.1.11"    :scope "test"]
                  [org.clojure/clojurescript "0.0-3123"  :scope "test"]])
