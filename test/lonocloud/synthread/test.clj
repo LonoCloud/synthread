@@ -112,7 +112,11 @@
       (->is = 1)
       inc
       inc)
-    (->is = [0 3 2 3])))
+    (->is = [0 3 2 3]))
+  (>do {1 10, 2 20, 3 30}
+    (>each
+      (>second inc))
+    (->is = {1 11, 2 21, 3 31})))
 
 (deftest test-nth
   (>do (range 4)
@@ -173,18 +177,6 @@
              (->is = 6))
       (->is = {:a {:b {:c 6}}})))
 
-(deftest test-key
-  (>do {1 10, 2 20, 3 30}
-    (>each
-     (>key inc))
-    (->is = {2 10, 3 20, 4 30})))
-
-(deftest test-val
-  (>do {1 10, 2 20, 3 30}
-    (>each
-     (>val inc))
-    (->is = {1 11, 2 21, 3 31})))
-
 (deftest test-let
   (-> 1
       (>let [a 3
@@ -231,8 +223,8 @@
 
   (>do {"a" 1 "b" 2}
     (>each
-     (>key keyword)
-     (>val -))
+     (>first keyword)
+     (>second -))
     (->is = {:a -1 :b -2}))
 
   (>do [0 1 2 3 4]
@@ -251,7 +243,7 @@
 
   (>do (R. 1 2 3)
     (>each
-     (>val inc))
+     (>second inc))
     (->is = (R. 2 3 4)))
   (-> nil
     (>each inc)
