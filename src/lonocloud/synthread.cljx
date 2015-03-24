@@ -38,6 +38,7 @@
       ~'<> (assoc ~'<> ~context a#)]
     (throw (Exception. "Unable to expand getup in non-binding block context."))))
 
+#+clj
 (defn- expand-bind-macro
   [[label expr :as binding]]
   (if (and (list? expr)
@@ -45,6 +46,7 @@
     (macroexpand (vary-meta expr assoc :bind-label label))
     binding))
 
+#+clj
 (defn- expand-bind-macros
   "Look for special 'by' forms in binding pairs to expand them into multiple binding pairs"
   [bindings]
