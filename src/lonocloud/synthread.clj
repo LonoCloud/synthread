@@ -308,16 +308,6 @@
   [x binding & body]
   `(>each ~x (>as ~binding ~@body)))
 
-(defmacro >key
-  "Thread the key in x through body (x must be a MapEntry)."
-  [x & body]
-  `(let [x# ~x] (clojure.lang.MapEntry. (>do (key x#) ~@body) (val x#))))
-
-(defmacro >val
-  "Thread the value in x through body (x must be a MapEntry)."
-  [x & body]
-  `(let [x# ~x] (clojure.lang.MapEntry. (key x#) (>do (val x#) ~@body))))
-
 ;; Section 3: Additional helper functions.
 
 (defn >apply
