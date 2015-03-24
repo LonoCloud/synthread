@@ -1,8 +1,17 @@
 (ns lonocloud.synthread.test
+  #+clj
   (:require [lonocloud.synthread :refer :all]
-            [lonocloud.synthread.impl :as impl])
-  (:require [clojure.test :refer [deftest is]]))
+            [clojure.test :refer [deftest is]])
+  #+cljs
+  (:require-macros [lonocloud.synthread.test-macros :refer [->is]]
+                   [lonocloud.synthread :refer
+                    [>do >if >let >if-let >when >when-not >when-let >for >first
+                     >second >nth >take >drop >last >butlast >rest >update >let
+                     >fn >as >aside >side >each >each-as >cond >in]])
+  (:require [lonocloud.synthread :refer [>reset >apply]]
+            [cljs.test :refer-macros [deftest is]]))
 
+#+clj
 (defmacro ->is
   ([x op]
    (let [xx '<topic>]
