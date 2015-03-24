@@ -1,0 +1,35 @@
+(set-env!
+ :source-paths   #{"src" "test"}
+ :resource-paths #{"html"}
+ :dependencies '[[adzerk/boot-cljs "0.0-3123" :scope "test"]
+                 [adzerk/boot-test "1.0.4" :scope "test"]
+                 [deraen/boot-cljx "0.2.2"]
+                 [adzerk/boot-reload "0.2.6" :scope "test"]
+                 [org.clojure/clojurescript "0.0-3123"  :scope "test"]])
+
+(require
+ '[adzerk.boot-cljs      :refer [cljs]]
+ '[deraen.boot-cljx      :refer [cljx]]
+ '[adzerk.boot-reload    :refer [reload]]
+ '[adzerk.boot-test :refer [test]])
+
+(deftask run-cljs-test
+  "Run cljs tests"
+  []
+  (fn middleware [next-handler]
+    (fn handler [fileset]
+      (sh "node" "target/script.js")
+      (-> fileset next-handler))))
+
+(deftask dev []
+  (comp (watch)
+        (speak)
+        (reload)
+        (cljx)
+        (test)
+        (cljs :main 'test-runner
+              :output-to "script.js"
+              :asset-path "target/out"
+              :target :nodejs
+              :optimizations :none)
+        (run-cljs-test)))
