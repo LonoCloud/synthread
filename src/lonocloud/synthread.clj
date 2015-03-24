@@ -107,16 +107,19 @@
                      (partition 2 test-form-pairs))
            :else ~'<>)))
 
+(defn mkbox [x]
+  (clojure.lang.Box. x))
+
 (defmacro >for
   "Thread x through each iteration of body. Uses standard looping
   binding syntax for iterating.
   (>for 4 [x [1 2 3]] (+ x)) ;; returns 10"
   [x seq-exprs & body]
-  `(let [box# (clojure.lang.Box. ~x)
-         ~'<> (.val box#)]
+  `(let [box# (mkbox ~x)
+         ~'<> (.-val box#)]
      (doseq ~seq-exprs
-       (set! (.val box#) (>do (.val box#) ~@body)))
-     (.val box#)))
+       (set! (.-val box#) (>do (.-val box#) ~@body)))
+     (.-val box#)))
 
 (defmacro >let
   "Thread x through body (with bindings available as usual).
