@@ -13,7 +13,7 @@ SynThread is available from clojars. Add it to your project dependencies:
 
 # Usage
 
-See [unit tests](blob/master/test/lonocloud/synthread/test.clj#L11)
+See [unit tests](test/lonocloud/synthread/test.cljx#L25)
 for specific examples of each macro.
 
 Some general guidelines:
