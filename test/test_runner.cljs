@@ -1,9 +1,10 @@
 (ns test-runner
   (:require [clojure.string :as str]
             [cljs.test :as test :refer-macros [run-tests] :refer [report]]
-            [lonocloud.synthread.test]))
+            [lonocloud.synthread.test]
+            [cljs.nodejs :as nodejs]))
 
-(enable-console-print!)
+(nodejs/enable-util-print!)
 
 (defmethod report [::test/default :summary] [m]
   (println "\nRan " (:test m) " tests containing")
@@ -14,3 +15,5 @@
   (test/run-tests
    (test/empty-env ::test/default)
    'lonocloud.synthread.test))
+
+(set! *main-cli-fn* run)
