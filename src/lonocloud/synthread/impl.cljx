@@ -33,7 +33,6 @@
 (defn replace-content
   [o n]
   (cond
-    (same o n)                    (if (satisfies? IMeta o) (with-meta n (meta o)) n)
     (satisfies? IMapEntry o)      (vec n)
     (satisfies? IRecord o)        (with-meta (merge o (if (map? n) n
                                                           (into {} (map vec n))))
