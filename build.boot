@@ -1,7 +1,7 @@
 (set-env!
  :source-paths   #{"src" "test"}
  :resource-paths #{"html"}
- :dependencies '[[adzerk/boot-cljs "0.0-3123" :scope "test"]
+ :dependencies '[[adzerk/boot-cljs "0.0-2814-3" :scope "test"]
                  [adzerk/boot-test "1.0.4" :scope "test"]
                  [deraen/boot-cljx "0.2.2"]
                  [com.cemerick/piggieback "0.1.5"]
