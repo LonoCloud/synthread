@@ -28,12 +28,12 @@
   [rover {:keys [temp] :as forecast}]
   (-> rover
     (->/when (< temp -35.3)
-      (->/assoc
+      (->/update
         :battery shutdown
         :outbox (conj {:to :nasa
                        :body "temp too low"})))
-    (->/assoc :outbox (conj {:to :nasa
-                             :body forecast}))))
+    (->/update :outbox (conj {:to :nasa
+                              :body forecast}))))
 
 (defn example [do-side-effects]
   (-> (new-rover)

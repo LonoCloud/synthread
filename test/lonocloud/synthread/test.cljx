@@ -1,13 +1,26 @@
 (ns lonocloud.synthread.test
-  (:require [lonocloud.synthread :as ->]
-            [lonocloud.synthread.impl :as impl])
-  (:use [clojure.test :only [deftest is]]))
+  #+clj
+  (:require [lonocloud.synthread :as ->])
+  #+cljs
+  (:require-macros [lonocloud.synthread.test-macros :refer [->is]])
+  #+clj
+  (:require [clojure.test :refer [deftest is]])
+  #+cljs
+  (:require [lonocloud.synthread :as -> :include-macros true]
+            [cljs.test :refer-macros [deftest is]]))
 
-(defmacro ->is [x binop v]
-  (let [xx '<topic>]
-    `(let [~xx ~x]
-       (is (~binop ~xx ~v))
-       ~xx)))
+#+clj
+(defmacro ->is
+  ([x op]
+   (let [xx '<topic>]
+     `(let [~xx ~x]
+        (is (~op ~xx))
+        ~xx)))
+  ([x binop v]
+   (let [xx '<topic>]
+     `(let [~xx ~x]
+        (is (~binop ~xx ~v))
+        ~xx))))
 
 (deftest test-do
   (is (= (-> 0 inc (+ 2) (- 1 1))
@@ -96,7 +109,9 @@
     (->is = [2 1 2 3]))
   (->/do {:a 1, :b 2, :c 3}
     (->/first reverse)
-    (->is = {1 :a, :b 2, :c 3})))
+    (->is #{{:a 1, :b 2, 3 :c}
+            {1 :a, :b 2, :c 3}
+            {:a 1, 2 :b, :c 3}})))
 
 (deftest test-second
   (->/do (range 4)
@@ -114,6 +129,20 @@
       inc)
     (->is = [0 1 4 3])))
 
+(deftest test-take
+  (->/do (range 4)
+         (->/take 2
+                  (->is = [0 1])
+                  reverse)
+         (->is = [1 0 2 3])))
+
+(deftest test-drop
+  (->/do (range 4)
+         (->/drop 2
+                  (->is = [2 3])
+                  reverse)
+         (->is = [0 1 3 2])))
+
 (deftest test-last
   (->/do (range 4)
     (->/last
@@ -122,16 +151,23 @@
       inc)
     (->is = [0 1 2 5])))
 
+(deftest test-butlast
+  (->/do (range 4)
+    (->/butlast
+      (->is = [0 1 2])
+      rest)
+    (->is = [1 2 3])))
+
 (deftest test-rest
   (->/do (range 4)
-    (->/rest
-      (->is = [1 2 3])
-      rest)
-    (->is = [0 2 3])))
+         (->/rest
+          (->is = [1 2 3])
+          rest)
+         (->is = [0 2 3])))
 
-(deftest test-assoc
+(deftest test-update
   (->/do {:a 1 :b 2}
-      (->/assoc
+      (->/update
        :a dec
        :b (* 2))
       (->is = {:a 0 :b 4})))
@@ -147,13 +183,13 @@
 (deftest test-key
   (->/do {1 10, 2 20, 3 30}
     (->/each
-     (->/key inc))
+     (->/first inc))
     (->is = {2 10, 3 20, 4 30})))
 
 (deftest test-val
   (->/do {1 10, 2 20, 3 30}
     (->/each
-     (->/val inc))
+     (->/second inc))
     (->is = {1 11, 2 21, 3 31})))
 
 (deftest test-let
@@ -178,7 +214,7 @@
 (deftest test-as-with-arrow
   (->/do {:a {:delta 1} :b 2}
       (->/as (-> :a :delta delta)
-             (->/assoc :b (+ delta)))
+             (->/update :b (+ delta)))
       (->is = {:a {:delta 1} :b 3})))
 
 (deftest test-aside
@@ -202,8 +238,8 @@
 
   (->/do {"a" 1 "b" 2}
     (->/each
-     (->/key keyword)
-     (->/val -))
+     (->/first keyword)
+     (->/second -))
     (->is = {:a -1 :b -2}))
 
   (->/do [0 1 2 3 4]
@@ -216,16 +252,14 @@
 
   (->/do {1 2, 3 4, 5 6}
     (->/each
-     (->/assoc 0 (* 10)
+     (->/update 0 (* 10)
                1 (+ 10)))
     (->is = {10 12, 30 14, 50 16}))
 
   (->/do (R. 1 2 3)
     (->/each
-     (->/val inc))
-    (->is = (impl/compile-if clojure.lang.IRecord
-                             (R. 2 3 4)
-                             {:a 2 :b 3 :c 4})))
+     (->/second inc))
+    (->is = (R. 2 3 4)))
   (-> nil
     (->/each inc)
     (->is = ())))
@@ -256,8 +290,3 @@
   (-> 10
       (->/apply + [1 2])
       (->is = 13)))
-
-;; Just try this a bunch to make sure isolate.clj isn't doing wrong.
-(deftest test-reloading
-  (dotimes [_ 5]
-    (require '[lonocloud.synthread :as ->] :reload-all)))

@@ -3,25 +3,32 @@
 Extensions of Clojure's standard -> macro used to build code blocks that
 operate on a threaded topic.
 
-# Including in your project.clj
+# Installation
 
-SynThread is available from clojars. Add it to your Leiningen project.clj:
+SynThread is available from clojars. Add it to your project dependencies:
 
 ```clojure
-   [lonocloud/synthread "1.0.4"]
+   [synthread "1.3.0"]
 ```
 
 # Usage
 
-See [unit tests](http://github.com/LonoCloud/synthread/blob/master/test/lonocloud/synthread/test.clj#L11)
+See [unit tests](test/lonocloud/synthread/test.cljx#L25)
 for specific examples of each macro.
 
 Some general guidelines:
 
-1. Require SynThread with the alias `->` like this:
+1. Require SynThread with the alias `->` like this in Clojure:
 ```clojure
    (ns your.ns.here
      (:require [lonocloud.synthread :as ->]))
+```
+
+or like this if you use Clojurescript:
+
+```clojure
+   (ns your.ns.here
+     (:require [lonocloud.synthread :as -> :include-macros true]))
 ```
 
 2. Always start a threaded block with Clojure's standard `->` macro or `->/do` (see next point).
@@ -29,10 +36,10 @@ This clearly identifies the topic to be threaded.
 ```clojure
    ;; good
    (-> {:first "John" :last "Smith"}
-       (->/assoc :last first)) ;; replace last name with last initial
+       (->/update :last first)) ;; replace last name with last initial
 
    ;; bad
-   (->/assoc {:first "John" :last "Smith"}
+   (->/update {:first "John" :last "Smith"}
              :last first) ;; replace last name with last initial
 ```
 
@@ -48,7 +55,7 @@ block.
 ```clojure
    ;; good
    (-> {:a 1 :b 2}
-     (->/assoc :a inc)
+     (->/update :a inc)
      (->/in [:b]
        (->/for [n (range 3)]
          (inc n))))
@@ -56,7 +63,7 @@ block.
 
    ;; bad
    (-> {:a 1 :b 2}
-     (->/assoc :a inc)
+     (->/update :a inc)
      :b ;; type changed from map to number
      inc)
    ;; returns 3
@@ -68,7 +75,7 @@ macro that needs access to the topic in some parameter slot other than
 the first:
 ```clojure
    (-> {:a 1 :b 2}
-     (->/assoc :a inc)
+     (->/update :a inc)
      (->/as topic                             ;; label topic
        (->/when (> (:b topic) 10)
          (assoc :large-b true))))
@@ -76,7 +83,7 @@ the first:
 Standard destructuring is supported by `->/as`:
 ```clojure
    (-> {:a 1 :b 2}
-     (->/assoc :a inc)
+     (->/update :a inc)
      (->/as {:keys [b]}                       ;; destructure topic
        (->/when (> b 10)
          (assoc :large-b true))))
@@ -97,10 +104,10 @@ contexts, so don't be afraid to use them. `do` lets you stop
 threading, and yet pass a result to the next threaded step:
 ```clojure
    (-> {:a 1 :b 2}
-     (->/assoc :a inc)
+     (->/update :a inc)
      (->/when we-should-reset?
        (do {:a 0 :b 0}))  ;; see also ->/reset function
-     (->/assoc :b inc))
+     (->/update :b inc))
 ```
 This can be particularly useful in conjunction with `->/as`:
 ```clojure
@@ -114,7 +121,7 @@ result to the next step:
 ```clojure
    (-> {:a 1 :b 2}
      (doto prn)
-     (->/assoc :a inc))
+     (->/update :a inc))
 ```
 The debugging `prn` above works, but the patten rapidly becomes
 awkward if you want to provide a label to the prn. That would actually
@@ -126,7 +133,7 @@ is exactly the purpose of `->/aside`:
      (->/aside topic        ;; note the body is entirely unthreaded
        (prn :topic topic)
        (println "Note: b is currently" (:b topic))) ;; return value is ignored
-     (->/assoc :a inc))
+     (->/update :a inc))
 ```
 
 6. In addition to the threading macros, two helper functions are also
@@ -162,12 +169,19 @@ we were aware of during the design of SynThread include:
 - [Levy's swiss-arrows](https://github.com/rplevy/swiss-arrows): `-<>`, `-?<>`, `-<><:p`, etc.
 - [`core.incubator`](https://github.com/clojure/core.incubator): `-?>`, `-?>>`, `.?.`, etc.
 
+# Example walkthrough
+
+http://www.infoq.com/presentations/Macros-Monads
+
 # Copyright
-© LonoCloud. All rights reserved.
+
+© 2013-2014 LonoCloud.
+© 2015 Hoang Minh Thang.
+
+All rights reserved.
 The use and distribution terms for this software are covered by the
 Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 which can be found in the file epl-v10.html at the root of this distribution.
 By using this software in any fashion, you are agreeing to be bound by
 the terms of this license.
 You must not remove this notice, or any other, from this software.
-
