@@ -24,8 +24,8 @@
  pom  {:project     'synthread
        :version     +version+
        :description "Syntax Threading library"
-       :url         "http://github.com/myguidingstar/synthread/"
-       :scm         {:url "https://github.com/myguidingstar/synthread"}
+       :url         "http://github.com/lonocloud/synthread/"
+       :scm         {:url "https://github.com/lonocloud/synthread"}
        :license     {"EPL" "http://www.eclipse.org/legal/epl-v10.html"}})
 
 (deftask run-cljs-test
