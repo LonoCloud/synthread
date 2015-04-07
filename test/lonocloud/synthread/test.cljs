@@ -1,26 +1,9 @@
 (ns lonocloud.synthread.test
-  #+clj
-  (:require [lonocloud.synthread :as ->])
-  #+cljs
-  (:require-macros [lonocloud.synthread.test-macros :refer [->is]])
-  #+clj
-  (:require [clojure.test :refer [deftest is]])
-  #+cljs
   (:require [lonocloud.synthread :as -> :include-macros true]
-            [cljs.test :refer-macros [deftest is]]))
-
-#+clj
-(defmacro ->is
-  ([x op]
-   (let [xx '<topic>]
-     `(let [~xx ~x]
-        (is (~op ~xx))
-        ~xx)))
-  ([x binop v]
-   (let [xx '<topic>]
-     `(let [~xx ~x]
-        (is (~binop ~xx ~v))
-        ~xx))))
+            [cljs.test])
+  (:require-macros [lonocloud.synthread.test :refer [->is]]
+                   [lonocloud.synthread.cljs-is-macro :refer [->is]]
+                   [cljs.test :refer [deftest is]]))
 
 (deftest test-do
   (is (= (-> 0 inc (+ 2) (- 1 1))
