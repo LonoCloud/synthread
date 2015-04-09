@@ -1,4 +1,4 @@
-(ns lonocloud.synthread.impl)
+(ns lonocloud.synthread.fns)
 
 #?(:clj
    (defn replace-content

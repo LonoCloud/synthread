@@ -15,6 +15,7 @@
 
 (defn cljs-eval-forms* [repl-env forms]
   (cljs.repl/repl repl-env
+                  :output-dir "target/cljs-out"
                   :read (forms-reader forms)
                   :quit-prompt (constantly false)
                   :prompt      (constantly false)

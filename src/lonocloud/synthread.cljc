@@ -1,7 +1,7 @@
 (ns lonocloud.synthread
   (:refer-clojure :exclude [apply])
-  (:require #?(:cljs lonocloud.synthread.impl
-               :clj  lonocloud.synthread.core))
+  (:require lonocloud.synthread.fns
+            #?(:clj lonocloud.synthread.macros))
   #?(:cljs (:require-macros [lonocloud.synthread :refer [publish-vars]])))
 
 #?(:clj
@@ -21,6 +21,6 @@
                  (def ~sym (deref orig-var#))
                  (alter-meta! (var ~sym) merge (meta orig-var#))))))))
 
-#?(:clj (publish-vars lonocloud.synthread.core))
+#?(:clj (publish-vars lonocloud.synthread.macros))
 
-(publish-vars lonocloud.synthread.impl)
+(publish-vars lonocloud.synthread.fns)

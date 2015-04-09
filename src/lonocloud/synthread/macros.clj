@@ -1,5 +1,5 @@
-(ns lonocloud.synthread.core
-  (:require [lonocloud.synthread.impl :as impl]))
+(ns lonocloud.synthread.macros
+  (:require [lonocloud.synthread.fns :as impl]))
 
 ;; Section 0: special syntax support for updating and getting from a
 ;; sub-path.
