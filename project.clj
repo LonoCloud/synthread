@@ -6,6 +6,6 @@
             :distribution :repo
             :comments "same as Clojure"}
   :dependencies [[org.clojure/clojure "1.7.0-alpha6"]
-                 [org.clojure/clojurescript "0.0-3190"]]
+                 [org.clojure/clojurescript "0.0-3191"]]
   :min-lein-version "2.0.0"
   :main lonocloud.synthread.test-runner)
