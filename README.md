@@ -6,18 +6,15 @@ operate on a threaded topic.
 # Installation
 
 SynThread is available from clojars. Add it to your project dependencies:
-
-```clojure
-   [lonocloud.synthread "1.4.0-SNAPSHOT"]
-```
+[![Clojars Project](http://clojars.org/lonocloud/synthread/latest-version.svg)](http://clojars.org/lonocloud/synthread)
 
 # Usage
 
-See [unit tests](test/lonocloud/synthread/test.cljc)
-for specific examples of each macro.
+See [unit tests](test/lonocloud/synthread/test.cljc) for specific examples of each macro.
 
-I've started basic wiki with a [usage guide](https://github.com/LonoCloud/synthread/wiki/usage) and
-[quick reference](https://github.com/LonoCloud/synthread/wiki/quickref) to get you started.
+Read the [usage guide](https://github.com/LonoCloud/synthread/wiki/usage) to learn about conventions and tips.
+
+The [quick reference](https://github.com/LonoCloud/synthread/wiki/quickref) summarizes the macros and functions provided. 
 
 # Related work
 
