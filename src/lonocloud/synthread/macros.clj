@@ -303,27 +303,3 @@
   "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
   [x binding & body]
   `(>each ~x (>as ~binding ~@body)))
-
-;; Section 4: Just a helper macro for making a public API.
-(defmacro publish-vars
-  "Publish synthread vars (vars named with a leading >) from this
-  namespace into lonocloud.synthread and stripping the leading > from
-  the published vars. At call time, this macro will unmap any
-  previously defined vars to avoid warnings.
-
-  :skip-macros aids in compiling to clojurescript by not publishing
-  macro vars into the namespace."
-
-  ;;; The problem is that vars in clojure don't have the right
-  ;;; metadata and there are no vars in clojurescript.
-
-  [src-ns]
-  `(do
-     ~@(for [[orig-sym var] (ns-publics src-ns)
-             :when (.startsWith (name orig-sym) ">")
-             :let [sym (symbol (subs (name orig-sym) 1))]]
-         `(do
-            (ns-unmap 'lonocloud.synthread '~sym)
-            (let [orig-var# (var ~(symbol (name src-ns) (name orig-sym)))]
-              (def ~sym (deref orig-var#))
-              (alter-meta! (var ~sym) merge (meta orig-var#)))))))
