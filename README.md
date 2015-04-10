@@ -16,8 +16,8 @@ SynThread is available from clojars. Add it to your project dependencies:
 See [unit tests](test/lonocloud/synthread/test.cljc)
 for specific examples of each macro.
 
-I've started basic wiki with a [usage guide](synthread/wiki/usage) and
-[quick reference](synthread/wiki/quickref) to get you started.
+I've started basic wiki with a [usage guide](https://github.com/LonoCloud/synthread/wiki/usage) and
+[quick reference](https://github.com/LonoCloud/synthread/wiki/quickref) to get you started.
 
 # Related work
 
