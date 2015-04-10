@@ -8,7 +8,7 @@ operate on a threaded topic.
 SynThread is available from clojars. Add it to your project dependencies:
 
 ```clojure
-   [synthread "1.3.0"]
+   [lonocloud.synthread "1.4.0-SNAPSHOT"]
 ```
 
 # Usage
@@ -31,8 +31,8 @@ Some general guidelines:
        (:require [lonocloud.synthread :as -> :include-macros true]))
    ```
 
-2. **Always start a threaded block with Clojure's standard `->` macro or `->/do`** (see next point).
-   This clearly identifies the topic to be threaded.
+2. **Always start a threaded block with Clojure's standard `->` macro or `->/do`**
+   (see next point). This clearly identifies the topic to be threaded.
 
    ```clojure
    ;; good
@@ -44,22 +44,20 @@ Some general guidelines:
                :last first) ;; replace last name with last initial
    ```
 
-3. **Don't change the type (or shape) of the topic as it flows through.** In our
-   experience, the threading macros are used to either dig into a deep data
-   structure massaging the topic the deeper it goes or are used to build a
-   result by describing a pipeline of operations. The main difference between
-   digging and building is that the type and shape of the threaded topic is
+3. **Don't change the type (or shape) of the topic as it flows through.**
+   In our experience, the threading macros are used to either dig into
+   a deep data structure or are used to build a result by describing a
+   pipeline of operations. The main difference between digging and
+   building is that the type and shape of the threaded topic is
    changing or is constant respectively. We use synthread macros for
-   building as a general rule. The `->/do` macro will behave like `->`
-   but will also check that the topic is maintained through a threaded
-   block.
+   building as a general rule.
    ```clojure
    ;; good
    (-> {:a 1 :b 2}
        (->/update :a inc)
        (->/in [:b]
-       (->/for [n (range 3)]
-           (inc n))))
+         (->/for [n (range 3)]
+           (+ n))))
    ;; returns {:a 2 :b 5}
 
    ;; bad
@@ -70,10 +68,9 @@ Some general guidelines:
    ;; returns 3
    ```
 
-4. **Use `->/as` to put the threaded value (or "topic") into a named
-   local variable.** This is useful when you need to call a function or
-   macro that needs access to the topic in some parameter slot other than
-   the first:
+4. **Use `->/as` to put the threaded value (or "topic") into a named local variable.**
+   This is useful when you need to call a function or macro that needs
+   access to the topic in some parameter slot other than the first:
    ```clojure
    (-> {:a 1 :b 2}
        (->/update :a inc)
@@ -176,13 +173,13 @@ http://www.infoq.com/presentations/Macros-Monads
 
 # Copyright
 
-© 2013-2014 LonoCloud.
+© 2013-2015 LonoCloud.
 © 2015 Hoang Minh Thang.
 
 All rights reserved.
 The use and distribution terms for this software are covered by the
 Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
-which can be found in the file epl-v10.html at the root of this distribution.
-By using this software in any fashion, you are agreeing to be bound by
-the terms of this license.
-You must not remove this notice, or any other, from this software.
+which can be found in the file epl-v10.html at the root of this
+distribution. By using this software in any fashion, you are agreeing
+to be bound by the terms of this license. You must not remove this
+notice, or any other, from this software.
