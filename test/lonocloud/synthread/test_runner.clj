@@ -1,6 +1,6 @@
 (ns lonocloud.synthread.test-runner
   (:require lonocloud.synthread.test
-            clojure.test
+            [clojure.test :refer [deftest]]
             cljs.repl
             cljs.repl.rhino))
 
@@ -24,7 +24,7 @@
 (defmacro cljs-eval-forms [repl-env & forms]
   `(cljs-eval-forms* ~repl-env '~forms))
 
-(defn -main [& argv]
+(deftest test-cljs
   (println "\n== Clojure tests ==")
   (prn (select-keys (clojure.test/test-ns 'lonocloud.synthread.test) [:test :pass :fail :error]))
 
