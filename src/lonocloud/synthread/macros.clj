@@ -303,3 +303,8 @@
   "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
   [x binding & body]
   `(>each ~x (>as ~binding ~@body)))
+
+(defmacro >meta
+  "Thread meta data on x through body."
+  [x & body]
+  `(vary-meta ~x (fn [topic#] (>do topic# ~@body))))

@@ -269,6 +269,13 @@
       (do [(* 10 k) (+ 10 v)]))
     (->is (= <> {10 12, 30 14, 50 16}))))
 
+(deftest test-meta
+  (->/do {}
+    (->/meta
+     (assoc :a 1)
+     (assoc :b 2))
+    (->is (= (meta <>) {:a 1, :b 2}))))
+
 (deftest test-reset
   (->/do 0
     (->/reset 5)
