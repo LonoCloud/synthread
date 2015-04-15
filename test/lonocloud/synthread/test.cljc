@@ -184,9 +184,12 @@
 (deftest test-let
   (->/do 1
     (->/let [a 3
-             b 5]
-            (+ a b))
-    (->is (= <> 9))))
+             b 5
+             c (:key {:key 4})
+             d (+ 1 1)
+             e <>]
+            (+ a b c d e))
+    (->is (= <> 16))))
 
 (deftest test-fn
   (let [add-n (->/fn [n] (+ n))]

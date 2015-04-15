@@ -41,6 +41,7 @@
 (defn- expand-bind-macro
   [[label expr :as binding]]
   (if (and (list? expr)
+           (symbol? (first expr))
            (:bind-macro (meta (resolve (first expr)))))
     (macroexpand (vary-meta expr assoc :bind-label label))
     binding))
