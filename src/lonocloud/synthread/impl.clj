@@ -73,7 +73,7 @@
   [sym]
   (cloaked-sym sym))
 
-(clj/defmacro decloak
+(clj/defmacro decloak-1
   "Decloak sym by defining a var with the same name."
   [sym]
   ;; if sym is a macro and we are compiling in a cljs env, refer it
@@ -105,6 +105,13 @@
 
          ;; Return the decloaked var.
          (var ~sym)))))
+
+(clj/defmacro decloak
+  "Decloak syms by defining vars named sym and referencing the cloaked values."
+  [& syms]
+  `(do
+     ~@(for [sym syms]
+         `(decloak-1 ~sym))))
 
 #_(clj/defmacro decloak-macro
   "Decloak sym by ..."
