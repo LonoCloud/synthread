@@ -56,7 +56,7 @@
 (defmacro ^:cloaked if
   "If pred is true, thread x through the then form, otherwise through
   the else form.
-  (-> 5 (>if should-inc? inc dec))"
+  (-> 5 (->/if should-inc? inc dec))"
   [x pred then else]
   `(let [~'<> ~x]
      (if ~pred
@@ -65,11 +65,81 @@
 
 (defmacro ^:cloaked let
   "Thread x through body (with bindings available as usual).
-  (>let 4 [x 3] (+ x) (- x)) ;; returns 4"
+  (-> 4 (->/let [x 3] (+ x) (- x))) ;=> 4"
   [x bindings & body]
   `(let [~'<> ~x
          ~@(binding/expand &env bindings)]
      (__do ~'<> ~@body)))
+
+(defmacro ^:cloaked if-let
+  "Thread x through then or else depending on the value of pred. If
+  pred is true, bind local to pred.
+  (-> {}
+    (>if-let [x :bar]
+      (assoc :foo x)
+      (assoc :was-bar false)))
+  ;; returns {:foo :bar}"
+  [x [local pred :as binding] then else]
+  `(let [~'<> ~x]
+     (if-let [~@(binding/expand &env binding)]
+       (__do ~'<> ~then)
+       (__do ~'<> ~else))))
+
+(defmacro ^:cloaked when
+  "If pred is true, thread x through body, otherwise return x unchanged.
+  (-> 5 (->/when should-inc? inc))"
+  [x pred & body]
+  `(let [~'<> ~x]
+     (if ~pred
+       (__do ~'<> ~@body)
+       ~'<>)))
+
+(defmacro ^:cloaked when-not
+  "If pred is false, thread x through body, otherwise return x unchanged.
+  (-> 5 (->/when-not should-inc? inc))"
+  [x pred & body]
+  `(let [~'<> ~x]
+     (if ~pred
+       ~'<>
+       (__do ~'<> ~@body))))
+
+(defmacro ^:cloaked when-let
+  "If bound values are true in bindings, thread x through the body,
+  otherwise return x unchanged.
+  (-> 5 (->/when-let [amount (:amount foo)] (+ amount)))"
+  [x [local pred :as binding] & forms]
+  `(let [~'<> ~x
+         ~@(binding/expand &env binding)]
+     (if ~local
+       (__do ~'<> ~@forms)
+       ~'<>)))
+
+(defmacro ^:cloaked cond
+  "Thread x through forms in each clause. Return x if no test matches.
+  (-> [1 2] (->/cond true (conj 3) false pop))"
+  [x & test-form-pairs]
+  `(let [~'<> ~x]
+     (cond ~@(mapcat (fn [[test form]] `[~test (__do ~'<> ~form)])
+                     (partition 2 test-form-pairs))
+           :else ~'<>)))
+
+(defmacro ^:cloaked for
+  "Thread x through each iteration of body. Uses standard looping
+  binding syntax for iterating.
+  (-> 4 (->/for [x [1 2 3]] (+ x))) ;=> 10"
+  [x seq-exprs & body]
+  `(let [box# (atom ~x)
+         ~'<> @box#]
+     (doseq ~seq-exprs
+       (reset! box# (__do @box# ~@body)))
+     @box#))
+
+(defmacro ^:cloaked fn
+  "Thread x into body of fn. (inspired by Prismatic's fn->).
+  (let [add-n (>fn [n] (+ n))]
+    (-> 1 (add-n 2))) ;=> 3"
+  [args & body]
+  `(fn [~'<> ~@args] (__do ~'<> ~@body)))
 
 ;; Section 2: Macros that access or update the topic.
 
@@ -110,13 +180,137 @@
 
       :else n)))
 
+(defmacro ^:cloaked first
+  "Thread the first element of x through body.
+  (-> [1 2 3] (->/first inc -)) ;=> [-2 2 3]"
+  [x & body]
+  `(let [x# ~x]
+     (replace-content x# (cons (__do (first x#) ~@body)
+                               (rest x#)))))
+(defmacro ^:cloaked second
+  "Thread the second element of x through body.
+  (-> [1 2 3] (->/second inc -)) ;=> [1 -3 3]"
+  [x & body]
+  `(let [x# ~x]
+     (replace-content x# (cons (first x#)
+                               (cons (__do (second x#) ~@body)
+                                     (drop 2 x#))))))
+
 (defmacro ^:cloaked last
-    "EXPERIMENTAL Thread the last element of x through body.
-  (->/last [1 2 3] inc -) ;; returns [1 2 -4]"
+  "Thread the last element of x through body.
+  (-> [1 2 3] (->/last inc -)) ;=> [1 2 -4]"
     [x & body]
     `(let [x# ~x]
        (replace-content x# (concat (drop-last 1 x#)
                                    [(__do (last x#) ~@body)]))))
+
+(defmacro ^:cloaked nth
+  "Thread the nth element of x through body.
+  (-> [1 2 3] (->/nth 1 inc -)) ;=> [1 -3 3]"
+  [x n & body]
+  `(let [x# ~x
+         n# ~n]
+     (replace-content x# (concat (take n# x#)
+                                 (cons (__do (nth x# n#) ~@body)
+                                       (drop (inc n#) x#))))))
+
+(defmacro ^:cloaked take
+  "Thread the first n elements of x through body.
+  (-> [1 2 3] (->/take 2 reverse)) ;=> [2 1 3]"
+  [x n & body]
+  `(let [x# ~x
+         n# ~n]
+     (replace-content x# (concat (__do (take n# x#) ~@body)
+                                 (drop n# x#)))))
+
+(defmacro ^:cloaked drop
+  "Thread all but the first n elements of x through body.
+  (-> [1 2 3] (->/drop 1 reverse) ;=> [1 3 2]"
+  [x n & body]
+  `(let [x# ~x
+         n# ~n]
+     (replace-content x# (concat (take n# x#)
+                                 (__do (drop n# x#) ~@body)))))
+
+(defmacro ^:cloaked butlast
+  "Thread all but the last item in x through body."
+  [x & body]
+  `(let [x# ~x]
+     (replace-content x# (concat (__do (drop-last 1 x#) ~@body)
+                                 [(last x#)]))))
+
+(defmacro ^:cloaked rest
+  "Thread the rest of items in x through body."
+  [x & body]
+  `(let [x# ~x]
+     (replace-content x# (cons (first x#)
+                               (__do (rest x#) ~@body)))))
+
+(defmacro ^:cloaked update
+  "Thread the value at each key through the pair form where each form
+  must be a function which accepts the value of the key as its first
+  argument.
+  (-> {:a 1} (->/update :a inc)) ;=> {:a 2}"
+  [x & key-form-pairs]
+  (let [xx (gensym)]
+    `(let [~xx ~x]
+       (assoc ~xx
+         ~@(->> key-form-pairs
+                (partition 2)
+                (mapcat (fn [[key form]]
+                          [key `(__do (get ~xx ~key) ~form)])))))))
+
+
+(defmacro in
+  "Thread the portion of x specified by path through body.
+  (>in {:a 1, :b 2} [:a] (+ 2)) ;; = {:a 3, :b 2}"
+  [x path & body]
+  `(let [x# ~x
+         path# ~path
+         f# (fn [topic#] (__do topic# ~@body))]
+     (if (empty? path#)
+       (f# x#)
+       (update-in x# path# f#))))
+
+(defmacro as
+  "Bind value of x and thread x through body.
+   EXPERIMENTALLY supports arbitrary threading form in place of binding form."
+  [x binding & body]
+  (if (seq? binding)
+    `(let [~'<> ~x
+           ~(last binding) (-> ~'<> ~(drop-last binding))]
+       (__do ~'<> ~@body))
+    `(let [~'<> ~x
+           ~binding ~'<>]
+       (__do ~'<> ~@body))))
+
+(defmacro aside
+  "Bind value of x, evaluate unthreaded body and return x."
+  [x binding & body]
+  `(doto ~x (as ~binding (do ~@body))))
+
+(defmacro side
+  "Evaluate unthreaded body and return unchanged x."
+  [x & body]
+  `(let [~'<> ~x]
+     ~@body
+     ~'<>))
+
+(defmacro each
+  "EXPERIMENTAL Thread each item in x through body."
+  [x & body]
+  `(let [x# ~x]
+     (replace-content x# (map #(__do % ~@body) x#))))
+
+(defmacro each-as
+  "EXPERIMENTAL Thread each item in x through body and apply binding to each item."
+  [x binding & body]
+  `(each ~x (as ~binding ~@body)))
+
+(defmacro ^:cloaked meta
+  "Thread meta data on x through body."
+  [x & body]
+  `(vary-meta ~x (fn [topic#] (__do topic# ~@body))))
 
 (defn ^:cloaked apply
   "Apply f to x and args."
@@ -128,21 +322,8 @@
   "Replace x with y."
   [x y] y)
 
-;; Extra pre/postwalk functions... Not sure why these exist anymore.
-(defn map-or-identity [f x]
-  (if (coll? x)
-    (map f x)
-    x))
-
-(defn prewalk [f form]
-  ;; (prn :form form)
-  (replace-content form (map-or-identity (partial prewalk f) (f form))))
-
-(defn postwalk [f form]
-  (f (replace-content form (map-or-identity (partial postwalk f) form))))
-
 ;; Decloak any forms that were hidden during macro/fn definition
 ;; Warning: keep this at the bottom of the namespace.
-(decloak do if let)
-(decloak last)
+(decloak do if let if-let when when-not when-let cond for fn)
+(decloak first second last nth take drop butlast rest update meta)
 (decloak apply)
