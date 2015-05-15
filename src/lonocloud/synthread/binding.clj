@@ -1,6 +1,5 @@
-(ns lonocloud.synthread.bindmacro
-  (:require cljs.analyzer
-            [lonocloud.synthread.impl :refer [cljs-env?]]))
+(ns lonocloud.synthread.binding
+  (:require [lonocloud.synthread.cljsutil :as cljsutil]))
 
 (defn get-label
   "Return outer binding label (that has been attached to the meta data
@@ -14,9 +13,7 @@
 (defn bindmacro?
   "Return true if sym resolves to a var tagged with :bindmacro."
   [env sym]
-  (:bindmacro (if (cljs-env? env)
-                (cljs.analyzer/resolve-macro-var env sym)
-                (meta (resolve sym)))
+  (:bindmacro (cljsutil/resolve-macro-meta env sym)
               false))
 
 (declare expand)
@@ -28,10 +25,8 @@
            (symbol? (first form))
            (bindmacro? env (first form)))
     (expand env
-            (let [labeled-form (vary-meta form assoc ::label label)]
-              (if (cljs-env? env)
-                (cljs.analyzer/macroexpand-1 env labeled-form)
-                (macroexpand-1 labeled-form))))
+            (cljsutil/macroexpand-1 env
+                                    (vary-meta form assoc ::label label)))
     binding))
 
 (defn expand

@@ -1,25 +1,7 @@
-(ns lonocloud.synthread.impl
-  (:require cljs.env
-            cljs.analyzer)
+(ns lonocloud.synthread.cloaking
+  (:require [lonocloud.synthread.cljsutil :as cljsutil])
   (:refer-clojure :exclude [defmacro]))
 (alias 'clj 'clojure.core)
-
-;; Macro convenience for cljc files.
-(clj/defmacro defmacro-cljc
-  "Clojurescript compatible defmacro that should work in cljc files
-  without protecting the invocation with a reader conditional."
-  [macro-name & tail]
-  (if-let [ns-name (:name (:ns &env))]
-    ;; The presence of ns-name indicates this is a cljs compilation
-    `^:merge (~'ns ~ns-name (:require-macros [~ns-name :refer [~macro-name]]))
-    `(clj/defmacro ~macro-name ~@tail)))
-
-;; namespace related functions and macros
-
-(defn cljs-env?
-  "Return true when compiling in a clojurescript enviroment."
-  [env]
-  (contains? env :ns))
 
 (defn var-name?
   "Return true if (qualified) sym matches both the namespace and name of var."
@@ -38,60 +20,46 @@
                   (filter #(var-name? % ns-sym name-sym))
                   (all-ns))))
 
-(defn ns-current-name
-  "Return the name of the current namespace."
-  [env]
-  (:name (:ns env) (ns-name *ns*)))
-
-;; Cloaking logic
-(defn ^:private cloaked-sym
+(defn cloak-sym
   "Return a cloaked symbol based on s."
   [s]
   (with-meta (symbol (str "__" (name s)))
     (meta s)))
 
-(defn ^:private uncloaked-sym
-  "Return an uncloaked symbol from s."
-  [s]
-  (symbol (subs (name s) 2)))
-
-(defn ^:private cloaked-name
+(defn cloak-name
   "Return a cloaked name if n has been tagged as ^:cloaked."
   [n]
   (if (:cloaked (meta n))
-    (cloaked-sym n)
+    (cloak-sym n)
     n))
 
 (clj/defmacro defmacro
-  "Add ability to cloak the macro's name so as to not override a
-  prexisting name. See uncloak macro for revealing cloaked macros."
+  "Add ability to cloak macro so that macro-name is hidden until
+  'decloaked' at a later point in the file. Use decloak to reveal the
+  hidden name."
   [macro-name & tail]
-  `(defmacro-cljc ~(cloaked-name macro-name) ~@tail))
-
-(clj/defmacro cloaked
-  "Expand to the cloaked value associated with sym."
-  [sym]
-  (cloaked-sym sym))
+  ;; expand into cljsutil's defmacro for cljs compatibility.
+  `(cljsutil/defmacro ~(cloak-name macro-name) ~@tail))
 
 (clj/defmacro decloak-1
   "Decloak sym by defining a var with the same name."
   [sym]
   ;; if sym is a macro and we are compiling in a cljs env, refer it
   ;; since it was already decloaked on the clj side.
-  (if (contains? (:macros (:ns &env)) sym)
-    (let [ns-name (:name (:ns &env))]
+  (if (cljsutil/macro? &env sym)
+    (let [ns-name (cljsutil/current-cljs-ns-name &env)]
       `^:merge (~'ns ~ns-name (:require-macros [~ns-name :refer [~sym]])))
 
-    (let [var-form `(var ~(cloaked-sym sym))]
+    (let [var-form `(var ~(cloak-sym sym))]
       `(do
          ;; unmap sym in current ns to avoid warnings.
-         (ns-unmap '~(ns-current-name &env) '~sym)
+         (ns-unmap '~(cljsutil/current-ns-name &env) '~sym)
 
          ;; clj env only! Refer a found prior-var back into current ns
          ;; so that it can be recycled by the def below. This allows
          ;; for error free reloading of namespaces (in Clojure) that
          ;; use :refer to import a decloaked var. Such a mess :-/
-         ~(when-not (cljs-env? &env)
+         ~(when-not (cljsutil/cljs-env? &env)
             `(when-let [prior-var# (seek-var '~(ns-name *ns*) '~sym)]
                (.refer ~'*ns* '~sym prior-var#)))
 
@@ -113,16 +81,9 @@
      ~@(for [sym syms]
          `(decloak-1 ~sym))))
 
-#_(clj/defmacro decloak-macro
-  "Decloak sym by ..."
-  [sym]
-  (when-let [ns-name ]
-    ;; The presence of ns-name indicates this is a cljs compilation
-    ))
-
 (defmacro ^:cloaked defn
-  "Add ability to cloak a function. Use uncloak macro to
-  reveal cloaked functions."
+  "Add ability to cloak a function. Use uncloak macro to reveal
+  cloaked functions."
   [fn-name & tail]
-  `(defn ~(cloaked-name fn-name) ~@tail))
+  `(defn ~(cloak-name fn-name) ~@tail))
 (decloak defn)

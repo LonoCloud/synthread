@@ -1,10 +1,10 @@
 (ns lonocloud.synthread
   (:refer-clojure :exclude [defn defmacro])
 
-  #?(:clj (:require [lonocloud.synthread.bindmacro :as bindmacro]))
+  #?(:clj (:require [lonocloud.synthread.binding :as binding]))
 
   (#?(:clj :require :cljs :require-macros)
-     [lonocloud.synthread.impl :refer [defn defmacro decloak]]))
+     [lonocloud.synthread.cloaking :refer [defn defmacro decloak]]))
 
 ;; Section 0: special syntax support for updating and getting from a
 ;; sub-path.
@@ -17,7 +17,7 @@
 
   This is a binding macro."
   [context update-form get-form]
-  (when-let [label (bindmacro/get-label &form)]
+  (when-let [label (binding/get-label &form)]
     `[a# (get ~'<> ~context)
       a# (-> a# ~update-form)
       ~'<> (assoc ~'<> ~context a#)
@@ -31,7 +31,7 @@
 
   This is binding macro."
   [context get-form update-form]
-  (when-let [label (bindmacro/get-label &form)]
+  (when-let [label (binding/get-label &form)]
     `[a# (get ~'<> ~context)
       ~label (-> a# ~get-form)
       a# (-> a# ~update-form)
@@ -68,7 +68,7 @@
   (>let 4 [x 3] (+ x) (- x)) ;; returns 4"
   [x bindings & body]
   `(let [~'<> ~x
-         ~@(bindmacro/expand &env bindings)]
+         ~@(binding/expand &env bindings)]
      (__do ~'<> ~@body)))
 
 ;; Section 2: Macros that access or update the topic.
