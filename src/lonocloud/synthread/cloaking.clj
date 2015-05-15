@@ -46,7 +46,7 @@
   [sym]
   ;; if sym is a macro and we are compiling in a cljs env, refer it
   ;; since it was already decloaked on the clj side.
-  (if (cljsutil/macro? &env sym)
+  (if (and (cljsutil/cljs-env? &env) (cljsutil/macro? &env sym))
     (let [ns-name (cljsutil/current-cljs-ns-name &env)]
       `^:merge (~'ns ~ns-name (:require-macros [~ns-name :refer [~sym]])))
 
