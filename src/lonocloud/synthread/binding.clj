@@ -10,11 +10,11 @@
    (throw (Exception. (str "Unable to expand " (first form)
                            " in non-binding block context.")))))
 
-(defn bindmacro?
-  "Return true if sym resolves to a var tagged with :bindmacro."
+(defn binding?
+  "Return true if sym resolves to a var tagged with :binding."
   [env sym]
-  (:bindmacro (cljsutil/resolve-macro-meta env sym)
-              false))
+  (:binding (cljsutil/resolve-macro-meta env sym)
+            false))
 
 (declare expand)
 
@@ -23,7 +23,7 @@
   [env [label form :as binding]]
   (if (and (list? form)
            (symbol? (first form))
-           (bindmacro? env (first form)))
+           (binding? env (first form)))
     (expand env
             (cljsutil/macroexpand-1 env
                                     (vary-meta form assoc ::label label)))

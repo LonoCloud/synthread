@@ -294,7 +294,7 @@
 ;; Section 3: special binding macros for both updating a subtopic
 ;; and binding a result based on the subtopic.
 
-(defmacro ^:bindmacro upget
+(defmacro ^:binding upget
   "Expand into a threaded update-form followed by a threaded get-form both of
   which act on the value found in the current topic (bound to <>) under
   context. The resulting updated context value is then added back into <> and
@@ -308,7 +308,7 @@
       ~'<> (assoc ~'<> ~context a#)
       ~label (-> a# ~get-form)]))
 
-(defmacro ^:bindmacro getup
+(defmacro ^:binding getup
   "Expand into a threaded get-form followed by a threaded update-form both of
   which act on the value found in the current topic (bound to <>) under
   context. The resulting updated context value is then added back into <> and
