@@ -6,37 +6,6 @@
   (#?(:clj :require :cljs :require-macros)
      [lonocloud.synthread.cloaking :refer [defn defmacro decloak]]))
 
-;; Section 0: special syntax support for updating and getting from a
-;; sub-path.
-
-(defmacro ^:bindmacro upget
-  "Expand into a threaded update-form followed by a threaded get-form both of
-  which act on the value found in the current topic (bound to <>) under
-  context. The resulting updated context value is then added back into <> and
-  the result of get-form is bound to the bind-label (see below).
-
-  This is a binding macro."
-  [context update-form get-form]
-  (when-let [label (binding/get-label &form)]
-    `[a# (get ~'<> ~context)
-      a# (-> a# ~update-form)
-      ~'<> (assoc ~'<> ~context a#)
-      ~label (-> a# ~get-form)]))
-
-(defmacro ^:bindmacro getup
-  "Expand into a threaded get-form followed by a threaded update-form both of
-  which act on the value found in the current topic (bound to <>) under
-  context. The resulting updated context value is then added back into <> and
-  the result of get-form is bound to the bind-label (see below).
-
-  This is binding macro."
-  [context get-form update-form]
-  (when-let [label (binding/get-label &form)]
-    `[a# (get ~'<> ~context)
-      ~label (-> a# ~get-form)
-      a# (-> a# ~update-form)
-      ~'<> (assoc ~'<> ~context a#)]))
-
 ;; Section 1: macros that do not update the topic.
 ;;            Generally control flow macros.
 (defmacro ^:cloaked do
@@ -321,6 +290,37 @@
 (defn reset
   "Replace x with y."
   [x y] y)
+
+;; Section 3: special binding macros for both updating a subtopic
+;; and binding a result based on the subtopic.
+
+(defmacro ^:bindmacro upget
+  "Expand into a threaded update-form followed by a threaded get-form both of
+  which act on the value found in the current topic (bound to <>) under
+  context. The resulting updated context value is then added back into <> and
+  the result of get-form is bound to the bind-label (see below).
+
+  This is a binding macro."
+  [context update-form get-form]
+  (when-let [label (binding/get-label &form)]
+    `[a# (get ~'<> ~context)
+      a# (-> a# ~update-form)
+      ~'<> (assoc ~'<> ~context a#)
+      ~label (-> a# ~get-form)]))
+
+(defmacro ^:bindmacro getup
+  "Expand into a threaded get-form followed by a threaded update-form both of
+  which act on the value found in the current topic (bound to <>) under
+  context. The resulting updated context value is then added back into <> and
+  the result of get-form is bound to the bind-label (see below).
+
+  This is binding macro."
+  [context get-form update-form]
+  (when-let [label (binding/get-label &form)]
+    `[a# (get ~'<> ~context)
+      ~label (-> a# ~get-form)
+      a# (-> a# ~update-form)
+      ~'<> (assoc ~'<> ~context a#)]))
 
 ;; Decloak any forms that were hidden during macro/fn definition
 ;; Warning: keep this at the bottom of the namespace.
